@@ -363,7 +363,7 @@ def send_doc(cid,data,name,uid=None,store=True):
 
 def html_report(title,rows):
     tr="".join(f"<tr><td>{r.get('url','')}</td><td>{r.get('type','')}</td><td>{r.get('param','')}</td><td>{r.get('sig','')}</td></tr>" for r in rows)
-    return f"<html><head><meta charset='utf-8'><title>{title}</title><style>body{{font-family:monospace;background:#0d0d0d;color:#00ff88;padding:16px}}h1{{color:#ff0044}}table{{border-collapse:collapse;width:100%}}td,th{{border:1px solid #333;padding:6px;font-size:12px;text-align:left}}th{{background:#1a1a1a;color:#fff}}</style></head><body><h1>🌑 {title}</h1><p>Generated: {datetime.now():%Y-%m-%d %H:%M} | BZRK X</p><table><tr><th>URL</th><th>Type</th><th>Param</th><th>Proof</th></tr>{tr}</table></body></html>"
+    return f"<html><head><meta charset='utf-8'><title>{title}</title><style>body{{font-family:monospace;background:#0d0d0d;color:#00ff88;padding:16px}}h1{{color:#ff0044}}table{{border-collapse:collapse;width:100%}}td,th{{border:1px solid #333;padding:6px;font-size:12px;text-align:left}}th{{background:#1a1a1a;color:#fff}}</style></head><body><h1>🌑 {title}</h1><p>Generated: {datetime.now():%Y-%m-%d %H:%M} | ALONEX</p><table><tr><th>URL</th><th>Type</th><th>Param</th><th>Proof</th></tr>{tr}</table></body></html>"
 
 # ============ LICENSE / REF ============
 def is_banned(uid): return uid in sget("banned",[])
@@ -450,7 +450,7 @@ def join_screen(cid,uid):
     mk=types.InlineKeyboardMarkup()
     for ch in miss: mk.add(ubtn(f"JOIN {ch.get('name','CHANNEL').upper()}",ch["link"]))
     mk.add(sbtn("VERIFY SUBSCRIPTION","join:verify","success"))
-    bot.send_message(cid, f"<blockquote><b>{E['horn']} SUBSCRIPTION REQUIRED\n{LINE}\n{E['cross']} YOU MUST JOIN THE CHANNELS BELOW TO USE BZRK X.</b></blockquote>", reply_markup=mk, parse_mode="HTML")
+    bot.send_message(cid, f"<blockquote><b>{E['horn']} SUBSCRIPTION REQUIRED\n{LINE}\n{E['cross']} YOU MUST JOIN THE CHANNELS BELOW TO USE ALONEX.</b></blockquote>", reply_markup=mk, parse_mode="HTML")
 
 def new_captcha(uid):
     a,b=random.randint(2,12),random.randint(2,9)
@@ -755,7 +755,7 @@ def run_datadump(cid,uid,mid,jid,urls,ph_old,mode,juicy):
                 eta_txt = eta_line(t_start, done[0], len(to_dump))
                 creds_total = sum(len(d.get("creds",[])) for d in dumps)
                 cc_total = sum(len(d.get("cards",[])) for d in dumps)
-                try: bot.edit_message_text(f"<blockquote><b>{E['blood']} BZRK DUMPER V2\n{LINE}\n{bar(done[0],len(to_dump))} {pct(done[0],len(to_dump))}%\n📁 SITES DUMPED: {len(dumps)} | 🔐 CREDS: {creds_total} | 💳 CC: {cc_total}\n🛡️ PROXIES: {len(proxy_pool_dump)} | 🔄 ROT: {proxy_rotations_dump[0]}\n⚡ {speed} sites/min | ⚙️ {min(DUMP_WORKERS,mode['workers'])} WORKERS\n📊 TOTAL: {done[0]}/{len(to_dump)} sites | LEFT: {len(to_dump)-done[0]}\n{eta_txt}\nCUR: {cur[0][:20]}</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
+                try: bot.edit_message_text(f"<blockquote><b>{E['blood']} ALONEDUMPER V2\n{LINE}\n{bar(done[0],len(to_dump))} {pct(done[0],len(to_dump))}%\n📁 SITES DUMPED: {len(dumps)} | 🔐 CREDS: {creds_total} | 💳 CC: {cc_total}\n🛡️ PROXIES: {len(proxy_pool_dump)} | 🔄 ROT: {proxy_rotations_dump[0]}\n⚡ {speed} sites/min | ⚙️ {min(DUMP_WORKERS,mode['workers'])} WORKERS\n📊 TOTAL: {done[0]}/{len(to_dump)} sites | LEFT: {len(to_dump)-done[0]}\n{eta_txt}\nCUR: {cur[0][:20]}</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
                 except: pass
                 
         def on_done(f,u):
@@ -900,7 +900,7 @@ def pipeline_run(cid,uid,mid,jid,kws,dcount,do_dump):
     try:
         mode=get_mode(uid)
         def stage(t):
-            try: bot.edit_message_text(f"<blockquote><b>{E['rocket']} BZRK PIPELINE\n{LINE}\n{t}</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
+            try: bot.edit_message_text(f"<blockquote><b>{E['rocket']} ALONEPIPELINE\n{LINE}\n{t}</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
             except: pass
         stage(f"{E['dna']} GENERATING DORKS...")
         dorks=gen_dorks_list(kws,dcount)
@@ -1062,7 +1062,7 @@ def menu_caption(uid):
     u=U(uid); exp=license_until(uid)
     lic=f"{E['tick']} {datetime.fromtimestamp(exp):%d %b %Y}" if exp else f"{E['cross']} NOT ACTIVE"
     ap=f"\n{E['robot']} APPROVED" if str(uid) in sget("auto_approved",[]) else ""
-    return (f"<blockquote><b>{E['skull']} BZRK X — PREMIUM EDITION\n{LINE}\n{E['user']} @{u.get('username','user')}\n{E['zap']} {u.get('mode','turbo').upper()} | {E['globe']} {u.get('lang','en').upper()}\n{E['ticket']} {lic}{ap}\n{E['shield']} {len(uprox(uid))} PROXIES\n{LINE}\n{L(uid)['cap']}</b></blockquote>")
+    return (f"<blockquote><b>{E['skull']} ALONEX — PREMIUM EDITION\n{LINE}\n{E['user']} @{u.get('username','user')}\n{E['zap']} {u.get('mode','turbo').upper()} | {E['globe']} {u.get('lang','en').upper()}\n{E['ticket']} {lic}{ap}\n{E['shield']} {len(uprox(uid))} PROXIES\n{LINE}\n{L(uid)['cap']}</b></blockquote>")
 
 def main_markup(uid):
     mk=types.InlineKeyboardMarkup()
@@ -1143,21 +1143,21 @@ def render_screen(uid,cid,mid,scr):
         if scr=="proxy":
             bot.edit_message_text(f"<blockquote><b>{E['shield']} PROXY MANAGER {E['zap']}\n{LINE}\n{E['lock']} POOL | {E['tick']} {len(uprox(uid))}</b></blockquote>",chat_id=cid,message_id=mid,reply_markup=proxy_markup(),parse_mode="HTML"); return
         if scr=="admin":
-            bot.edit_message_text(f"<blockquote><b>{E['gear']} BZRK ADMIN\n{LINE}\nWELCOME, BOSS!</b></blockquote>",chat_id=cid,message_id=mid,reply_markup=admin_markup(uid),parse_mode="HTML"); return
+            bot.edit_message_text(f"<blockquote><b>{E['gear']} ALONEADMIN\n{LINE}\nWELCOME, BOSS!</b></blockquote>",chat_id=cid,message_id=mid,reply_markup=admin_markup(uid),parse_mode="HTML"); return
         if scr=="parse":
             mk=types.InlineKeyboardMarkup(); back_row(mk)
-            bot.edit_message_text(f"<blockquote><b>{E['globe']} BZRK PARSER\n{LINE}\nSEND DORKS (TEXT/.TXT):</b></blockquote>",chat_id=cid,message_id=mid,reply_markup=mk,parse_mode="HTML"); return
+            bot.edit_message_text(f"<blockquote><b>{E['globe']} ALONEPARSER\n{LINE}\nSEND DORKS (TEXT/.TXT):</b></blockquote>",chat_id=cid,message_id=mid,reply_markup=mk,parse_mode="HTML"); return
         if scr=="inject":
             mk=types.InlineKeyboardMarkup(); back_row(mk)
-            bot.edit_message_text(f"<blockquote><b>{E['syringe']} BZRK INJECTOR\n{LINE}\nSEND URLS (TEXT/.TXT):</b></blockquote>",chat_id=cid,message_id=mid,reply_markup=mk,parse_mode="HTML"); return
+            bot.edit_message_text(f"<blockquote><b>{E['syringe']} ALONEINJECTOR\n{LINE}\nSEND URLS (TEXT/.TXT):</b></blockquote>",chat_id=cid,message_id=mid,reply_markup=mk,parse_mode="HTML"); return
         if scr=="data":
             mk=types.InlineKeyboardMarkup(); back_row(mk)
-            bot.edit_message_text(f"<blockquote><b>{E['blood']} BZRK DUMPER\n{LINE}\nSEND VULN URLS:</b></blockquote>",chat_id=cid,message_id=mid,reply_markup=mk,parse_mode="HTML"); return
+            bot.edit_message_text(f"<blockquote><b>{E['blood']} ALONEDUMPER\n{LINE}\nSEND VULN URLS:</b></blockquote>",chat_id=cid,message_id=mid,reply_markup=mk,parse_mode="HTML"); return
         if scr=="gen":
             mk=types.InlineKeyboardMarkup()
             mk.row(btn("SHOPPING","preset:shopping"),btn("CUSTOM","preset:custom"))
             mk.add(btn("DEFAULT","preset:default")); back_row(mk)
-            bot.edit_message_text(f"<blockquote><b>{E['dna']} BZRK DORKER\n{LINE}\nPRESET YA CUSTOM:</b></blockquote>",chat_id=cid,message_id=mid,reply_markup=mk,parse_mode="HTML"); return
+            bot.edit_message_text(f"<blockquote><b>{E['dna']} ALONEDORKER\n{LINE}\nPRESET YA CUSTOM:</b></blockquote>",chat_id=cid,message_id=mid,reply_markup=mk,parse_mode="HTML"); return
         if scr=="km":
             mk=types.InlineKeyboardMarkup(); back_row(mk)
             bot.edit_message_text(f"<blockquote><b>{E['brain']} KEYWORD MAKER\n{LINE}\nKEYWORDS BHEJO:</b></blockquote>",chat_id=cid,message_id=mid,reply_markup=mk,parse_mode="HTML"); return
@@ -1202,7 +1202,7 @@ def render_screen(uid,cid,mid,scr):
         bot.edit_message_text(menu_caption(uid),chat_id=cid,message_id=mid,reply_markup=main_markup(uid),parse_mode="HTML")
     except Exception: send_main(cid,uid)
 
-HELP_TXT=f"""<blockquote><b>{E['skull']} BZRK X — PREMIUM EDITION
+HELP_TXT=f"""<blockquote><b>{E['skull']} ALONEX — PREMIUM EDITION
 {LINE}
 {E['rocket']} PIPELINE | {E['robot']} AUTO | {E['brain']} KEYWORDS | {E['dna']} DORKER
 {E['globe']} PARSER V2 | {E['syringe']} INJECTOR V3
@@ -1230,7 +1230,7 @@ def m_start(m):
         if not u.get("verified"):
             if ref: setU(uid,{"referred_by":ref,"pending_ref":True,"first_seen":time.time()})
             q,mk=new_captcha(uid)
-            bot.send_message(m.chat.id, f"<blockquote><b>{E['skull']} BZRK X\n{LINE}\n{E['robot']} SOLVE: {q} = ?</b></blockquote>", reply_markup=mk, parse_mode="HTML")
+            bot.send_message(m.chat.id, f"<blockquote><b>{E['skull']} ALONEX\n{LINE}\n{E['robot']} SOLVE: {q} = ?</b></blockquote>", reply_markup=mk, parse_mode="HTML")
             return
         with STATES_LOCK: states.pop(uid,None)
         if sget("channels",[]) and missing_channels(uid): 
@@ -1315,7 +1315,7 @@ def m_admin(m):
 
 def show_admin(uid,cid):
     try:
-        send_banner(cid,"admin", f"<blockquote><b>{E['gear']} BZRK ADMIN\n{LINE}\nWELCOME, BOSS!</b></blockquote>", admin_markup(uid))
+        send_banner(cid,"admin", f"<blockquote><b>{E['gear']} ALONEADMIN\n{LINE}\nWELCOME, BOSS!</b></blockquote>", admin_markup(uid))
     except Exception:
         pass
 
@@ -1563,7 +1563,7 @@ def _cb(c):
         mk.row(sbtn("SHOPPING","preset:shopping","success"),sbtn("CUSTOM","preset:custom","primary"))
         mk.add(sbtn("DEFAULT","preset:default","primary"))
         back_row(mk)
-        send_banner(cid,"dorker", f"<blockquote><b>{E['dna']} BZRK DORKER\n{LINE}\nSELECT PRESET OR CUSTOM:</b></blockquote>", mk)
+        send_banner(cid,"dorker", f"<blockquote><b>{E['dna']} ALONEDORKER\n{LINE}\nSELECT PRESET OR CUSTOM:</b></blockquote>", mk)
     elif d.startswith("preset:"):
         if not lic_gate(cid,uid): return
         k=d[7:]
@@ -1586,7 +1586,7 @@ def _cb(c):
         set_cur(uid,"parse")
         with STATES_LOCK: states[uid]=("parse_dorks",{})
         mk=types.InlineKeyboardMarkup(); back_row(mk)
-        send_banner(cid,"parser", f"<blockquote><b>{E['globe']} BZRK PARSER\n{LINE}\nSEND DORKS (TEXT/.TXT):</b></blockquote>", mk)
+        send_banner(cid,"parser", f"<blockquote><b>{E['globe']} ALONEPARSER\n{LINE}\nSEND DORKS (TEXT/.TXT):</b></blockquote>", mk)
     elif d.startswith("peng:"):
         with STATES_LOCK: st=states.pop(uid,None)
         if not st or st[0]!="parse_engine": return
@@ -1608,13 +1608,13 @@ def _cb(c):
         set_cur(uid,"inject")
         with STATES_LOCK: states[uid]=("dump_urls",{})
         mk=types.InlineKeyboardMarkup(); back_row(mk)
-        send_banner(cid,"injector", f"<blockquote><b>{E['syringe']} BZRK INJECTOR\n{LINE}\nSEND URLS (TEXT/.TXT):</b></blockquote>", mk)
+        send_banner(cid,"injector", f"<blockquote><b>{E['syringe']} ALONEINJECTOR\n{LINE}\nSEND URLS (TEXT/.TXT):</b></blockquote>", mk)
     elif d=="menu:data":
         if not lic_gate(cid,uid): return
         set_cur(uid,"data")
         with STATES_LOCK: states[uid]=("data_urls",{})
         mk=types.InlineKeyboardMarkup(); back_row(mk)
-        send_banner(cid,"dumper", f"<blockquote><b>{E['blood']} BZRK DUMPER\n{LINE}\nSEND VULNERABLE URLS:</b></blockquote>", mk)
+        send_banner(cid,"dumper", f"<blockquote><b>{E['blood']} ALONEDUMPER\n{LINE}\nSEND VULNERABLE URLS:</b></blockquote>", mk)
     elif d.startswith("dfilt:"):
         with STATES_LOCK: st=states.get(uid)
         if st and st[0]=="data_filter":
@@ -1668,7 +1668,7 @@ def _cb(c):
         mk=types.InlineKeyboardMarkup(); mk.add(ubtn("REFERRAL LINK",f"https://t.me/{BOT_USERNAME}?start=REF_{uid}")); back_row(mk)
         bot.send_message(cid, f"<blockquote><b>{E['gift']} REFER & EARN\n{LINE}\n{sget('ref_need',5)} REFERS = {sget('ref_reward_days',1)} DAYS\n{E['tick']} YOUR REFERS: {u.get('ref_count',0)}</b></blockquote>", reply_markup=mk, parse_mode="HTML")
     elif d=="menu:sell":
-        cap=f"<blockquote><b>{E['skull']} SOURCE CODE FOR SALE\n{LINE}\n{E['money']} PRICE: {sget('sc_price','$50')}\n{E['zap']} FULL BZRK X SOURCE\n{E['fire']} RESELLER RIGHTS INCLUDED</b></blockquote>"
+        cap=f"<blockquote><b>{E['skull']} SOURCE CODE FOR SALE\n{LINE}\n{E['money']} PRICE: {sget('sc_price','$50')}\n{E['zap']} FULL ALONEX SOURCE\n{E['fire']} RESELLER RIGHTS INCLUDED</b></blockquote>"
         mk=types.InlineKeyboardMarkup(); mk.add(ubtn("CONTACT TO BUY",fix_url(sget("sc_contact","")))); back_row(mk)
         fid=PHOTO_FC.get("main")
         try:
@@ -1942,7 +1942,7 @@ def run_km(cid,uid,kws,count):
 
 def run_gen(cid,uid,kws,count):
     bump("gen"); bumpU(uid,"gen")
-    msg=bot.send_message(cid, f"<blockquote><b>{E['dna']} BZRK DORKER\n{LINE}\nGENERATING {count} DORKS...</b></blockquote>", parse_mode="HTML")
+    msg=bot.send_message(cid, f"<blockquote><b>{E['dna']} ALONEDORKER\n{LINE}\nGENERATING {count} DORKS...</b></blockquote>", parse_mode="HTML")
     dorks=gen_dorks_list(kws,count)
     try: bot.delete_message(cid,msg.message_id)
     except: pass
@@ -2465,7 +2465,7 @@ def turbo_parse(cid,uid,mid,jid,dorks,engines,fresh,mode,threads=15,pages=1,work
                         blk=", ".join(sorted(blocked)) if blocked else "NONE"
                         resumed_txt = " [RESUMED]" if skip else ""
                         eta_txt = eta_line(t0, done[0], len(dorks))
-                        try: bot.edit_message_text(f"<blockquote><b>{E['globe']} BZRK PARSER {E['zap']}{resumed_txt}\n{LINE}\n🛡️ PROXIES: {len(act)}/{len(proxy_pool)} | 🔄 ROT: {proxy_idx[0]} | {E['zap']} {rps} R/S\n{E['gear']} {threads} THREADS | 👷 {wks} WORKERS | 📄 {pgs} PAGES\n{bar(done[0],len(dorks))} {pct(done[0],len(dorks))}%\n📊 TOTAL DORKS: {done[0]}/{len(dorks)+skip} | LEFT: {len(dorks)-done[0]}\n{eta_txt}\n{E['globe']} URLS: {len(results)} | {E['cross']} BLOCKED: {blk}\n{E['chart']} HITS: {et}</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
+                        try: bot.edit_message_text(f"<blockquote><b>{E['globe']} ALONEPARSER {E['zap']}{resumed_txt}\n{LINE}\n🛡️ PROXIES: {len(act)}/{len(proxy_pool)} | 🔄 ROT: {proxy_idx[0]} | {E['zap']} {rps} R/S\n{E['gear']} {threads} THREADS | 👷 {wks} WORKERS | 📄 {pgs} PAGES\n{bar(done[0],len(dorks))} {pct(done[0],len(dorks))}%\n📊 TOTAL DORKS: {done[0]}/{len(dorks)+skip} | LEFT: {len(dorks)-done[0]}\n{eta_txt}\n{E['globe']} URLS: {len(results)} | {E['cross']} BLOCKED: {blk}\n{E['chart']} HITS: {et}</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
                         except: pass
                 async def task(d):
                     if stopped(jid): return []
@@ -2655,7 +2655,7 @@ def turbo_inject(cid, uid, mid, jid, urls, mode, threads=15):
         tb_txt = " | ⏰ TIME-BLIND" if tb else ""
         try:
             bot.edit_message_text(
-                f"<blockquote><b>{E['syringe']} BZRK INJECTOR V3\n{LINE}\n🩸 TOTAL URLS: {len(urls)} | ⚡ FRESH: {len(to_test)} | 📦 CACHED: {len(urls)-len(to_test)}\n🛡️ PROXIES: {len(proxy_pool)} | {E['gear']} THREADS: {threads} | ⏱ {to}S{tb_txt}\n🗄️ MYSQL•MARIADB•PG•MSSQL•ORACLE•SQLITE</b></blockquote>",
+                f"<blockquote><b>{E['syringe']} ALONEINJECTOR V3\n{LINE}\n🩸 TOTAL URLS: {len(urls)} | ⚡ FRESH: {len(to_test)} | 📦 CACHED: {len(urls)-len(to_test)}\n🛡️ PROXIES: {len(proxy_pool)} | {E['gear']} THREADS: {threads} | ⏱ {to}S{tb_txt}\n🗄️ MYSQL•MARIADB•PG•MSSQL•ORACLE•SQLITE</b></blockquote>",
                 chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML"
             )
         except:
@@ -2712,7 +2712,7 @@ def turbo_inject(cid, uid, mid, jid, urls, mode, threads=15):
                             total_batches = (len(to_test) + INJ_BATCH - 1) // INJ_BATCH
                             current_batch = i // INJ_BATCH + 1
                             bot.edit_message_text(
-                                f"<blockquote><b>{E['syringe']} BZRK INJECTOR V3\n{LINE}\n{bar(done[0],len(urls))} {pct(done[0],len(urls))}%\n{E['blood']} VULN: {len(vuln)} | {E['shield']} SAFE: {len(nonev)} | 🧱 WAF: {wafed[0]}\n🛡️ PROXIES: {len(proxy_pool)} | 🔄 ROTATIONS: {proxy_idx[0]}\n🗄️ {dbs or '—'}\n{E['zap']} {rps} R/S | {E['gear']} {threads} THREADS\n📊 BATCH: {current_batch}/{total_batches} | TOTAL: {done[0]}/{len(urls)} | LEFT: {len(urls)-done[0]}</b></blockquote>",
+                                f"<blockquote><b>{E['syringe']} ALONEINJECTOR V3\n{LINE}\n{bar(done[0],len(urls))} {pct(done[0],len(urls))}%\n{E['blood']} VULN: {len(vuln)} | {E['shield']} SAFE: {len(nonev)} | 🧱 WAF: {wafed[0]}\n🛡️ PROXIES: {len(proxy_pool)} | 🔄 ROTATIONS: {proxy_idx[0]}\n🗄️ {dbs or '—'}\n{E['zap']} {rps} R/S | {E['gear']} {threads} THREADS\n📊 BATCH: {current_batch}/{total_batches} | TOTAL: {done[0]}/{len(urls)} | LEFT: {len(urls)-done[0]}</b></blockquote>",
                                 chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML"
                             )
                         except:
@@ -2877,7 +2877,7 @@ def run_datadump(cid,uid,mid,jid,urls,ph_old,mode,juicy):
                 eta_txt = eta_line(t_start, done[0], len(to_dump))
                 creds_total = sum(len(d.get("creds",[])) for d in dumps)
                 cc_total = sum(len(d.get("cards",[])) for d in dumps)
-                try: bot.edit_message_text(f"<blockquote><b>{E['blood']} BZRK DUMPER V2\n{LINE}\n{bar(done[0],len(to_dump))} {pct(done[0],len(to_dump))}%\n📁 SITES DUMPED: {len(dumps)} | 🔐 CREDS: {creds_total} | 💳 CC: {cc_total}\n🛡️ PROXIES: {len(proxy_pool_dump)} | 🔄 ROT: {proxy_rotations_dump[0]}\n⚡ {speed} sites/min | ⚙️ {min(DUMP_WORKERS,mode['workers'])} WORKERS\n📊 TOTAL: {done[0]}/{len(to_dump)} sites | LEFT: {len(to_dump)-done[0]}\n{eta_txt}\nCUR: {cur[0][:20]}</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
+                try: bot.edit_message_text(f"<blockquote><b>{E['blood']} ALONEDUMPER V2\n{LINE}\n{bar(done[0],len(to_dump))} {pct(done[0],len(to_dump))}%\n📁 SITES DUMPED: {len(dumps)} | 🔐 CREDS: {creds_total} | 💳 CC: {cc_total}\n🛡️ PROXIES: {len(proxy_pool_dump)} | 🔄 ROT: {proxy_rotations_dump[0]}\n⚡ {speed} sites/min | ⚙️ {min(DUMP_WORKERS,mode['workers'])} WORKERS\n📊 TOTAL: {done[0]}/{len(to_dump)} sites | LEFT: {len(to_dump)-done[0]}\n{eta_txt}\nCUR: {cur[0][:20]}</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
                 except: pass
                 
         def on_done(f,u):
@@ -2928,11 +2928,11 @@ def _resume_auto():
                 except: pass
                 threading.Thread(target=auto_loop,args=(int(u),int(u),v["limit"])).start()
         except: pass
-    try: bot.send_message(OWNER_ID, f"<blockquote><b>{E['skull']} BZRK X ONLINE — RESUME PROTOCOL ACTIVE.</b></blockquote>", parse_mode="HTML")
+    try: bot.send_message(OWNER_ID, f"<blockquote><b>{E['skull']} ALONEX ONLINE — RESUME PROTOCOL ACTIVE.</b></blockquote>", parse_mode="HTML")
     except: pass
 
 if __name__=="__main__":
-    print("💀 BZRK X — VIP PREMIUM EDITION STARTING...")
+    print("💀 ALONEX — VIP PREMIUM EDITION STARTING...")
     
     if "check_resources" in globals():
         try: check_resources()
@@ -2986,7 +2986,7 @@ if __name__=="__main__":
         try: 
             bot.infinity_polling(timeout=30)
         except KeyboardInterrupt: 
-            print("🛑 BZRK STOPPED.")
+            print("🛑 ALONESTOPPED.")
             break
         except Exception as e: 
             print("⚠️ RESTARTING DUE TO ERROR:", e)
