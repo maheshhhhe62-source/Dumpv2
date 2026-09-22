@@ -48,7 +48,7 @@ E = {
 }
 
 
-BOT_TOKEN = "8506725532:AAEZkbkq7d9zScEgyyCP0fjcLSzRH57qxac"
+BOT_TOKEN = "8907417771:AAEVcZtypGw930p15jzV8f8zV4Sgg2FYuK4"
 OWNER_ID = 7899583720
 BASE_DIR=os.path.dirname(os.path.abspath(__file__))
 def P(n): return os.path.join(BASE_DIR,n)
