@@ -383,14 +383,14 @@ def license_until(uid):
     try:
         u=U(uid); now=time.time(); rev=u.get("revoked_at",0); best=0
         al=u.get("admin_lic",0) or 0
-        if al>now and al>best and al<4102444800: best=al
+        if al>now and al>best and al<4102444800 and al-now > 3600: best=al
         bu=u.get("bonus_until",0) or 0
-        if bu>now and bu>best and bu<4102444800: best=bu
+        if bu>now and bu>best and bu<4102444800 and bu-now > 60: best=bu
         for v in load_json(KEYS_DB,{}).values():
             if v.get("activated_by")==uid and v.get("activated_at"):
                 if v["activated_at"]<rev: continue
                 exp=v["activated_at"]+v["hours"]*3600
-                if exp>now and exp>best and exp<4102444800: best=exp
+                if exp>now and exp>best and exp<4102444800 and exp-now > 60: best=exp
         return best if best>now else None
     except Exception:
         return None
@@ -403,13 +403,14 @@ def redeem(uid,key):
     if k.get("activated_by"): return f"{E['cross']} THIS KEY IS ALREADY USED!"
     k["activated_by"]=uid; k["activated_at"]=time.time(); save_json(KEYS_DB,keys)
     try:
-        exp_ts = k['activated_at'] + k['hours']*3600
-        if exp_ts < 4102444800:
+        hours = k.get('hours', 0) or 0
+        exp_ts = k['activated_at'] + hours*3600
+        if hours > 0 and exp_ts < 4102444800:
             exp_str = datetime.fromtimestamp(exp_ts).strftime("%d %b %Y %H:%M")
         else:
-            exp_str = "—"
+            exp_str = "LIFETIME"
     except Exception:
-        exp_str = "—"
+        exp_str = "LIFETIME"
     return f"{E['tick']} LICENSE ACTIVATED\n{LINE}\n{E['ticket']} VALID TILL: {exp_str}"
 
 def lic_gate(cid,uid):
