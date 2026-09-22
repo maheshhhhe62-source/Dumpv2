@@ -188,27 +188,34 @@ def get_text(m):
     
 
 def fmt_eta(sec):
-    if sec <= 0: return "0s"
-    sec = int(sec)
-    d, sec = divmod(sec, 86400)
-    h, sec = divmod(sec, 3600)
-    m, s = divmod(sec, 60)
-    if d: return f"{d}d {h}h {m}m"
-    if h: return f"{h}h {m}m {s}s"
-    if m: return f"{m}m {s}s"
-    return f"{s}s"
+    try:
+        if sec <= 0: return "0s"
+        sec = int(sec)
+        if sec > 86400*365: return "—"
+        d, sec = divmod(sec, 86400)
+        h, sec = divmod(sec, 3600)
+        m, s = divmod(sec, 60)
+        if d: return f"{d}d {h}h {m}m"
+        if h: return f"{h}h {m}m {s}s"
+        if m: return f"{m}m {s}s"
+        return f"{s}s"
+    except Exception:
+        return "—"
 
 def eta_line(start_t, done, total):
-    if done <= 0 or total <= 0: return "⏱ TIME LEFT: CALCULATING...\n🎯 COMPLETE AT: CALCULATING..."
-    elapsed = time.time() - start_t
-    if elapsed < 3: return "⏱ TIME LEFT: CALCULATING...\n🎯 COMPLETE AT: CALCULATING..."
-    rate = done / elapsed
-    if rate <= 0: return "⏱ TIME LEFT: CALCULATING...\n🎯 COMPLETE AT: CALCULATING..."
-    left_sec = (total - done) / rate
-    finish = datetime.fromtimestamp(time.time() + left_sec)
-    return (f"⏱ TIME LEFT: <b>{fmt_eta(left_sec)}</b>\n"
-            f"🎯 COMPLETE AT: <b>{finish:%d %b %Y, %I:%M %p}</b>")    
-    
+    try:
+        if done <= 0 or total <= 0: return "⏱ <b>𝙏𝙄𝙈𝙀 𝙇𝙀𝙁𝙏:</b> <i>𝙇𝙤𝙖𝙙𝙞𝙣𝙜....𝙋𝙡𝙚𝙖𝙨𝙚 𝙬𝙖𝙞𝙩</i>\n🎯 <b>𝘾𝙊𝙈𝙋𝙇𝙀𝙏𝙀 𝘼𝙏:</b> <i>𝙇𝙤𝙖𝙙𝙞𝙣𝙜....𝙋𝙡𝙚𝙖𝙨𝙚 𝙬𝙖𝙞𝙩</i>"
+        elapsed = time.time() - start_t
+        if elapsed < 3: return "⏱ <b>𝙏𝙄𝙈𝙀 𝙇𝙀𝙁𝙏:</b> <i>𝙇𝙤𝙖𝙙𝙞𝙣𝙜....𝙋𝙡𝙚𝙖𝙨𝙚 𝙬𝙖𝙞𝙩</i>\n🎯 <b>𝘾𝙊𝙈𝙋𝙇𝙀𝙏𝙀 𝘼𝙏:</b> <i>𝙇𝙤𝙖𝙙𝙞𝙣𝙜....𝙋𝙡𝙚𝙖𝙨𝙚 𝙬𝙖𝙞𝙩</i>"
+        rate = done / elapsed
+        if rate <= 0: return "⏱ <b>𝙏𝙄𝙈𝙀 𝙇𝙀𝙁𝙏:</b> <i>𝙇𝙤𝙖𝙙𝙞𝙣𝙜....𝙋𝙡𝙚𝙖𝙨𝙚 𝙬𝙖𝙞𝙩</i>\n🎯 <b>𝘾𝙊𝙈𝙋𝙇𝙀𝙏𝙀 𝘼𝙏:</b> <i>𝙇𝙤𝙖𝙙𝙞𝙣𝙜....𝙋𝙡𝙚𝙖𝙨𝙚 𝙬𝙖𝙞𝙩</i>"
+        left_sec = (total - done) / rate
+        if left_sec < 0 or left_sec > 86400*365: return "⏱ <b>𝙏𝙄𝙈𝙀 𝙇𝙀𝙁𝙏:</b> <i>𝙇𝙤𝙖𝙙𝙞𝙣𝙜....𝙋𝙡𝙚𝙖𝙨𝙚 𝙬𝙖𝙞𝙩</i>\n🎯 <b>𝘾𝙊𝙈𝙋𝙇𝙀𝙏𝙀 𝘼𝙏:</b> <i>𝙇𝙤𝙖𝙙𝙞𝙣𝙜....𝙋𝙡𝙚𝙖𝙨𝙚 𝙬𝙖𝙞𝙩</i>"
+        finish = datetime.fromtimestamp(time.time() + left_sec)
+        return (f"⏱ <b>𝙏𝙄𝙈𝙀 𝙇𝙀𝙁𝙏:</b> <code>{fmt_eta(left_sec)}</code>\n"
+                f"🎯 <b>𝘾𝙊𝙈𝙋𝙇𝙀𝙏𝙀 𝘼𝙏:</b> <code>{finish:%d %b %Y, %I:%M %p}</code>")
+    except Exception:
+        return "⏱ <b>𝙏𝙄𝙈𝙀 𝙇𝙀𝙁𝙏:</b> <i>𝙇𝙤𝙖𝙙𝙞𝙣𝙜....𝙋𝙡𝙚𝙖𝙨𝙚 𝙬𝙖𝙞𝙩</i>\n🎯 <b>𝘾𝙊𝙈𝙋𝙇𝙀𝙏𝙀 𝘼𝙏:</b> <i>𝙇𝙤𝙖𝙙𝙞𝙣𝙜....𝙋𝙡𝙚𝙖𝙨𝙚 𝙬𝙖𝙞𝙩</i>"
     
 
 def lines_of(t): return [x.strip() for x in (t or "").splitlines() if x.strip()]
