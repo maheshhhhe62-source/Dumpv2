@@ -1,0 +1,31 @@
+site:{site} inurl:{page_type}
+site:{site} inurl:{page_parameter}=
+site:{site} inurl:{page_type}.php?{page_parameter}=
+site:{site} inurl:{page_type}?{page_parameter}=
+site:{site} inurl:{page_parameter}= {keyword}
+site:{site} inurl:{page_type} {keyword}
+site:{site} "{keyword}" inurl:{page_parameter}=
+site:{site} "{keyword}" inurl:{page_type}
+site:{site} inurl:{page_type} intext:"{keyword}"
+site:{site} inurl:id= {keyword}
+site:{site} inurl:page= {keyword}
+site:{site} inurl:cat= {keyword}
+site:{site} inurl:category= {keyword}
+site:{site} inurl:product= {keyword}
+site:{site} inurl:item= {keyword}
+site:{site} inurl:pid= {keyword}
+site:{site} inurl:view= {keyword}
+site:{site} inurl:detail= {keyword}
+site:{site} "{keyword}" filetype:php
+site:{site} "{keyword}" filetype:asp
+site:{site} "{keyword}" filetype:aspx
+site:{site} inurl:{page_type}.php
+site:{site} inurl:{page_type}.asp
+site:{site} inurl:{page_type}.aspx
+inurl:{page_type}.php?{page_parameter}= site:{site}
+inurl:{page_type}?{page_parameter}= "{keyword}"
+inurl:{page_parameter}= "{keyword}" site:{site}
+site:{site} inurl:{page_parameter} "sql syntax"
+site:{site} inurl:{page_parameter} "mysql_fetch"
+site:{site} inurl:{page_parameter} "Warning: mysql"
+site:{site} inurl:{page_type} "powered by"

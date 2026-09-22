@@ -1,0 +1,1467 @@
+shop
+shopping
+store
+cart
+my cart
+shopping cart
+checkout
+billing
+shipping
+delivery
+address
+payment
+payment gateway
+credit card
+debit card
+charge
+admin
+admin panel
+dashboard
+ecommerce
+e-commerce
+online store
+online shopping
+product
+products
+product catalog
+catalog
+category
+categories
+brand
+brands
+wishlist
+favorites
+compare
+search
+product search
+filter
+sort
+price
+pricing
+discount
+coupon
+promo code
+voucher
+offer
+offers
+sale
+deals
+flash sale
+clearance
+inventory
+stock
+stock management
+warehouse
+order
+orders
+order management
+order tracking
+tracking
+shipment
+shipping method
+delivery status
+delivery date
+estimated delivery
+return
+return policy
+refund
+refund status
+exchange
+replacement
+customer
+customers
+customer account
+account
+profile
+login
+sign up
+signup
+register
+registration
+password
+forgot password
+reset password
+authentication
+otp
+verification
+email verification
+phone verification
+user
+users
+user management
+roles
+permissions
+staff
+seller
+vendor
+vendors
+marketplace
+seller dashboard
+seller account
+seller profile
+seller products
+seller orders
+commission
+payout
+payouts
+earnings
+revenue
+sales
+transactions
+transaction history
+wallet
+balance
+store credit
+gift card
+gift cards
+loyalty
+loyalty points
+rewards
+referral
+referral code
+affiliate
+affiliate program
+subscription
+membership
+premium
+customer support
+support
+help center
+contact us
+live chat
+chat support
+ticket
+tickets
+faq
+reviews
+ratings
+product reviews
+customer reviews
+feedback
+comments
+questions
+product details
+product description
+product image
+product gallery
+zoom
+variants
+size
+color
+quantity
+sku
+barcode
+upc
+ean
+isbn
+model number
+specifications
+features
+availability
+in stock
+out of stock
+low stock
+backorder
+preorder
+new arrivals
+best sellers
+trending
+popular
+recommended
+related products
+similar products
+recently viewed
+featured products
+featured
+collection
+collections
+new collection
+seasonal
+bundle
+bundles
+package
+packages
+digital products
+physical products
+services
+subscription products
+custom product
+personalization
+customization
+gift wrapping
+gift message
+invoice
+invoices
+receipt
+receipts
+tax
+tax calculation
+gst
+gst invoice
+vat
+sales tax
+shipping fee
+delivery fee
+handling fee
+service fee
+subtotal
+total
+grand total
+discount amount
+tax amount
+order total
+minimum order
+free shipping
+express shipping
+standard shipping
+international shipping
+local delivery
+same day delivery
+next day delivery
+pickup
+store pickup
+click and collect
+shipping address
+billing address
+apartment
+city
+state
+country
+postal code
+zip code
+phone number
+email address
+contact information
+payment method
+payment methods
+cash on delivery
+cod
+upi
+net banking
+bank transfer
+paypal
+stripe
+razorpay
+paytm
+google pay
+apple pay
+payment status
+pending payment
+paid
+failed payment
+cancelled payment
+payment confirmation
+checkout page
+cart page
+order confirmation
+order receipt
+invoice download
+download invoice
+print invoice
+secure payment
+ssl
+security
+fraud detection
+fraud prevention
+risk management
+chargeback
+dispute
+transaction id
+payment id
+order id
+tracking id
+invoice id
+customer id
+product id
+category id
+seller id
+search bar
+search results
+autocomplete
+filters
+price filter
+category filter
+brand filter
+rating filter
+size filter
+color filter
+availability filter
+sort by price
+sort by rating
+sort by popularity
+pagination
+infinite scroll
+load more
+product grid
+product list
+product card
+quick view
+quick add
+add to cart
+remove from cart
+update cart
+save for later
+move to wishlist
+buy now
+one click checkout
+guest checkout
+multi step checkout
+checkout form
+order summary
+cart summary
+coupon code
+apply coupon
+remove coupon
+discount code
+promo
+promotion
+promotions
+campaign
+marketing
+email marketing
+push notifications
+notifications
+alerts
+abandoned cart
+abandoned checkout
+cart recovery
+customer segmentation
+analytics
+reports
+sales report
+revenue report
+order report
+inventory report
+customer report
+conversion rate
+average order value
+traffic
+visitors
+sessions
+sales analytics
+dashboard analytics
+charts
+metrics
+kpi
+performance
+store analytics
+admin dashboard
+admin login
+admin authentication
+admin users
+manage products
+manage categories
+manage orders
+manage customers
+manage sellers
+manage inventory
+manage coupons
+manage promotions
+manage payments
+manage refunds
+manage returns
+manage shipping
+shipping zones
+shipping rates
+delivery zones
+delivery slots
+delivery partners
+courier
+courier service
+carrier
+tracking number
+shipment tracking
+fulfillment
+order fulfillment
+warehouse management
+purchase order
+supplier
+suppliers
+procurement
+restock
+stock alert
+inventory alert
+inventory sync
+product import
+product export
+csv import
+csv export
+bulk upload
+bulk edit
+bulk delete
+product management
+category management
+brand management
+attribute
+attributes
+custom fields
+product options
+variant management
+pricing rules
+dynamic pricing
+tier pricing
+wholesale
+wholesale pricing
+retail pricing
+msrp
+compare price
+cost price
+selling price
+profit margin
+markup
+commission rate
+seller verification
+kyc
+identity verification
+business verification
+tax information
+store settings
+general settings
+payment settings
+shipping settings
+tax settings
+notification settings
+email settings
+security settings
+privacy settings
+terms
+terms and conditions
+privacy policy
+cookie policy
+return policy
+refund policy
+shipping policy
+about us
+homepage
+landing page
+navigation
+menu
+header
+footer
+breadcrumb
+responsive
+mobile shopping
+mobile commerce
+m-commerce
+web store
+progressive web app
+pwa
+ios
+android
+app
+shopping app
+ecommerce app
+store app
+product page
+category page
+search page
+wishlist page
+account page
+order page
+checkout flow
+user experience
+ux
+ui
+design
+responsive design
+dark mode
+light mode
+theme
+custom theme
+branding
+logo
+banner
+hero banner
+carousel
+product carousel
+slider
+popup
+modal
+toast
+loading
+skeleton
+empty state
+error page
+404
+maintenance mode
+multilingual
+multi currency
+currency
+currency converter
+language
+localization
+internationalization
+timezone
+date format
+address validation
+phone validation
+form validation
+input validation
+api
+api integration
+webhooks
+database
+mysql
+postgresql
+mongodb
+firebase
+firestore
+cloud storage
+cdn
+image optimization
+seo
+search engine optimization
+meta title
+meta description
+structured data
+schema markup
+product schema
+sitemap
+robots.txt
+caching
+page speed
+security headers
+backup
+logs
+audit log
+activity log
+system status
+error monitoring
+fraud alert
+blocked user
+ban user
+suspend account
+delete account
+data export
+gdpr
+consent
+privacy
+accessibility
+screen reader
+keyboard navigation
+alt text
+customer service
+support ticket
+ticket status
+priority
+internal notes
+staff notes
+order notes
+customer notes
+seller notes
+notifications center
+email notifications
+sms notifications
+push notification
+order updates
+delivery updates
+payment alerts
+marketing notifications
+transactional email
+welcome email
+order email
+shipping email
+refund email
+password reset email
+otp email
+newsletter
+newsletter signup
+unsubscribe
+contact form
+feedback form
+review moderation
+review approval
+review management
+rating system
+star rating
+verified purchase
+helpful review
+report review
+content moderation
+user generated content
+wishlist sharing
+gift registry
+store locator
+locations
+branches
+pickup location
+geolocation
+nearby stores
+delivery radius
+service area
+delivery scheduling
+recurring orders
+reorder
+buy again
+order history
+purchase history
+saved addresses
+saved payment methods
+default address
+default payment
+multiple addresses
+multiple payment methods
+split payment
+partial payment
+installments
+emi
+bnpl
+cash payment
+digital wallet
+wallet payment
+payment token
+tokenization
+3d secure
+two factor authentication
+2fa
+captcha
+rate limiting
+session management
+login history
+device management
+account security
+password policy
+role based access
+rbac
+permission management
+audit trail
+data privacy
+encryption
+database security
+api security
+web security
+backup and restore
+disaster recovery
+system backup
+order automation
+inventory automation
+email automation
+marketing automation
+workflow
+workflow automation
+bulk actions
+scheduled reports
+export report
+download report
+admin tools
+settings
+configuration
+feature flags
+system configuration
+store status
+open store
+closed store
+holiday mode
+business hours
+support hours
+order cutoff
+minimum quantity
+maximum quantity
+purchase limit
+checkout validation
+cart validation
+stock validation
+price validation
+coupon validation
+payment validation
+order validation
+duplicate order
+order cancellation
+cancel order
+partial refund
+full refund
+refund request
+return request
+return approval
+return tracking
+replacement tracking
+exchange request
+exchange approval
+rma
+return merchandise authorization
+delivery exception
+failed delivery
+address change
+shipping label
+packing slip
+warehouse picking
+packing
+dispatch
+shipped
+delivered
+delivery proof
+proof of delivery
+courier tracking
+carrier integration
+shipping api
+tax api
+payment api
+product api
+order api
+customer api
+webhook events
+order webhook
+payment webhook
+refund webhook
+inventory webhook
+customer webhook
+seller webhook
+admin activity
+admin permissions
+admin role
+super admin
+manager
+support agent
+sales manager
+inventory manager
+content manager
+moderator
+seller approval
+seller onboarding
+seller payout
+seller commission
+seller analytics
+seller reviews
+seller disputes
+marketplace commission
+multi vendor
+multi seller
+vendor management
+vendor onboarding
+vendor payout
+vendor inventory
+vendor orders
+vendor reports
+supplier management
+purchase management
+purchase invoice
+supplier invoice
+goods received
+stock transfer
+warehouse transfer
+warehouse location
+bin location
+inventory adjustment
+stock count
+cycle count
+inventory valuation
+cost of goods
+cogs
+profit report
+profit and loss
+financial report
+accounting
+bookkeeping
+ledger
+transaction ledger
+settlement
+settlement report
+payment reconciliation
+reconciliation
+payout schedule
+payout status
+bank account
+bank verification
+upi id
+qr payment
+qr code
+payment link
+payment request
+checkout link
+invoice payment
+recurring payment
+subscription billing
+billing cycle
+trial period
+plan
+plans
+upgrade
+downgrade
+cancel subscription
+renewal
+renewal reminder
+subscription status
+membership benefits
+loyalty program
+points balance
+points history
+reward redemption
+referral rewards
+referral tracking
+affiliate tracking
+affiliate commission
+coupon management
+coupon usage
+coupon limits
+coupon expiration
+promotion rules
+buy one get one
+free gift
+minimum spend
+percentage discount
+flat discount
+category discount
+product discount
+customer discount
+first order discount
+new customer offer
+seasonal offer
+limited time offer
+flash deals
+daily deals
+deal of the day
+best deal
+price drop
+price alert
+back in stock
+stock notification
+wishlist notification
+review reminder
+recommendation engine
+personalization
+personalized shopping
+product recommendations
+cross sell
+upsell
+frequently bought together
+bundle offer
+related items
+recent searches
+search history
+browse history
+recommendation
+search ranking
+product ranking
+merchandising
+featured collection
+homepage sections
+content management
+cms
+blog
+blog posts
+guides
+buying guide
+size guide
+product comparison
+comparison table
+technical details
+manual
+downloads
+digital download
+license key
+download limit
+content delivery
+media library
+image library
+video
+product video
+360 product view
+3d product view
+augmented reality
+virtual try on
+customer photos
+social proof
+testimonials
+trust badges
+secure checkout
+money back guarantee
+free returns
+verified seller
+verified store
+authenticity
+product authenticity
+quality check
+customer satisfaction
+net promoter score
+nps
+retention
+repeat purchase
+churn
+lifetime value
+customer lifetime value
+clv
+cohort
+funnel
+sales funnel
+checkout conversion
+cart conversion
+product conversion
+bounce rate
+engagement
+retention rate
+repeat customers
+new customers
+customer acquisition
+acquisition cost
+customer acquisition cost
+roas
+return on ad spend
+campaign analytics
+utm tracking
+google analytics
+facebook pixel
+conversion tracking
+event tracking
+marketing attribution
+email campaign
+sms campaign
+push campaign
+audience
+segments
+automated campaigns
+a b testing
+ab testing
+experiments
+landing page optimization
+conversion optimization
+cro
+seo optimization
+product seo
+local seo
+schema
+search console
+site verification
+canonical url
+open graph
+social sharing
+share product
+share wishlist
+copy link
+qr product
+deep link
+app link
+universal link
+install app
+app download
+mobile responsive
+touch friendly
+mobile checkout
+mobile payment
+biometric login
+fingerprint login
+face unlock
+device verification
+session timeout
+remember me
+logout
+account deletion
+data retention
+consent management
+cookie consent
+legal
+compliance
+pci dss
+payment security
+data encryption
+secure storage
+access control
+least privilege
+monitoring
+uptime
+status page
+system health
+api monitoring
+database monitoring
+error tracking
+crash reports
+debug logs
+developer tools
+staging
+production
+deployment
+continuous integration
+continuous deployment
+version control
+release management
+feature release
+rollback
+backup schedule
+database migration
+schema migration
+import
+export
+integration
+third party integration
+oauth
+google login
+apple login
+social login
+single sign on
+sso
+api key
+access token
+refresh token
+developer portal
+api documentation
+webhook documentation
+integration settings
+connected apps
+store integration
+erp integration
+crm integration
+accounting integration
+shipping integration
+tax integration
+marketing integration
+analytics integration
+payment processor
+payment provider
+gateway integration
+checkout integration
+fraud provider
+identity provider
+sms provider
+email provider
+notification provider
+cloud provider
+hosting
+domain
+custom domain
+ssl certificate
+cdn integration
+image cdn
+object storage
+database backup
+restore
+data migration
+bulk import
+bulk export
+scheduled import
+scheduled export
+data sync
+real time sync
+inventory sync
+order sync
+customer sync
+product sync
+price sync
+catalog sync
+multichannel
+omnichannel
+social commerce
+instagram shop
+facebook shop
+google shopping
+marketplace integration
+amazon integration
+shopify integration
+woocommerce
+wordpress ecommerce
+headless commerce
+composable commerce
+commerce api
+headless storefront
+storefront
+product feed
+shopping feed
+merchant center
+product ads
+shopping ads
+advertising
+sponsored products
+ad campaign
+ad budget
+ad performance
+marketing roi
+sales channel
+channel management
+multi channel inventory
+multi channel orders
+multi channel sales
+POS
+point of sale
+retail store
+physical store
+online offline
+omni channel pickup
+store credit
+cash register
+receipt printer
+barcode scanner
+inventory scanner
+staff account
+staff permissions
+shift management
+register management
+cash drawer
+refund at pos
+exchange at pos
+store orders
+retail orders
+customer lookup
+customer loyalty
+store promotions
+store inventory
+inventory location
+warehouse stock
+stock movement
+stock ledger
+serial number
+batch number
+expiry date
+lot tracking
+product expiry
+perishable products
+cold chain
+delivery route
+route optimization
+driver
+delivery driver
+driver app
+delivery management
+fleet
+fleet management
+dispatch management
+delivery tracking
+live tracking
+tracking map
+eta
+estimated time arrival
+delivery notification
+signature
+photo proof
+delivery attempt
+reschedule delivery
+delivery instructions
+leave at door
+contactless delivery
+scheduled delivery
+time slot
+delivery slot
+same day
+next day
+express
+standard
+economy shipping
+international delivery
+customs
+duties
+import tax
+shipping insurance
+package insurance
+lost package
+damaged package
+missing item
+wrong item
+customer complaint
+complaint management
+dispute resolution
+case management
+support workflow
+sla
+service level agreement
+response time
+resolution time
+priority support
+knowledge base
+help articles
+support articles
+chatbot
+ai support
+virtual assistant
+customer feedback
+post purchase survey
+review request
+satisfaction survey
+return survey
+order satisfaction
+delivery satisfaction
+support satisfaction
+customer journey
+customer experience
+cx
+ux research
+heatmap
+session recording
+behavior analytics
+funnel analysis
+event analytics
+product analytics
+cohort analysis
+retention analytics
+sales forecasting
+demand forecasting
+inventory forecasting
+reorder point
+safety stock
+lead time
+supplier lead time
+purchase planning
+automated replenishment
+stock optimization
+inventory optimization
+pricing optimization
+revenue optimization
+conversion optimization
+personalized pricing
+dynamic promotions
+rules engine
+business rules
+workflow rules
+automation rules
+approval workflow
+admin approval
+two step approval
+manual review
+verification queue
+moderation queue
+pending orders
+pending returns
+pending refunds
+pending payouts
+pending sellers
+pending products
+draft products
+published products
+scheduled products
+hidden products
+archived products
+product status
+order status
+customer status
+seller status
+payment status
+refund status
+return status
+shipment status
+inventory status
+store status
+system status
+health check
+notification templates
+email templates
+sms templates
+push templates
+invoice template
+receipt template
+packing slip template
+shipping label template
+pdf invoice
+print order
+print labels
+bulk print
+document management
+file upload
+image upload
+product media
+media management
+content library
+banner management
+homepage builder
+page builder
+theme editor
+navigation editor
+menu editor
+footer editor
+custom css
+custom javascript
+custom domain
+store branding
+brand settings
+favicon
+social links
+contact details
+business details
+company information
+legal information
+tax registration
+gst number
+vat number
+business registration
+bank details
+payout account
+store currency
+default currency
+supported currencies
+exchange rates
+multi currency checkout
+price localization
+regional pricing
+country restrictions
+shipping restrictions
+product restrictions
+catalog visibility
+customer groups
+wholesale customers
+retail customers
+vip customers
+b2b
+b2c
+business customers
+bulk ordering
+quote request
+request a quote
+purchase approval
+company account
+team account
+buyer approval
+credit limit
+net terms
+invoice terms
+purchase order number
+recurring invoice
+subscription invoice
+payment reminder
+overdue payment
+dunning
+failed renewal
+payment retry
+card updater
+billing portal
+customer portal
+seller portal
+admin portal
+account portal
+order portal
+tracking portal
+return portal
+support portal
+self service
+self service returns
+self service cancellation
+self service tracking
+self service invoices
+self service account
+personal data
+privacy controls
+download data
+delete data
+consent log
+security log
+login alerts
+suspicious login
+fraud score
+risk score
+velocity check
+device fingerprint
+ip reputation
+payment fraud
+card testing prevention
+bot protection
+ddos protection
+web application firewall
+waf
+security audit
+penetration testing
+vulnerability scanning
+dependency security
+secret management
+environment variables
+production secrets
+api rate limit
+request throttling
+idempotency
+retry logic
+queue
+background jobs
+job queue
+scheduled jobs
+cron
+task scheduler
+event queue
+message queue
+real time notifications
+websocket
+server sent events
+real time dashboard
+live inventory
+live order status
+live chat
+presence
+typing indicator
+chat history
+support conversation
+conversation history
+customer messaging
+seller messaging
+admin messaging
+broadcast
+announcement
+announcements
+store announcement
+maintenance announcement
+promotional banner
+notification banner
+in app notification
+notification preferences
+email preferences
+sms preferences
+marketing consent
+transactional messages
+customer onboarding
+seller onboarding
+admin onboarding
+guided setup
+setup wizard
+store setup
+product onboarding
+payment onboarding
+shipping onboarding
+tax onboarding
+verification onboarding
+import wizard
+migration wizard
+checkout wizard
+return wizard
+refund wizard
+payout wizard
+report builder
+custom reports
+saved reports
+report filters
+date range
+sales by day
+sales by week
+sales by month
+sales by product
+sales by category
+sales by brand
+sales by seller
+sales by customer
+orders by status
+orders by location
+revenue by channel
+revenue by product
+profit by product
+profit by category
+inventory turnover
+sell through rate
+stockout rate
+return rate
+refund rate
+cancellation rate
+delivery success rate
+on time delivery
+customer retention
+repeat order rate
+conversion funnel
+checkout abandonment
+cart abandonment
+average basket size
+units per order
+gross merchandise value
+gmv
+net sales
+gross sales
+net revenue
+gross revenue
+discounts
+refunds
+tax collected
+shipping revenue
+fees
+commission revenue
+payout amount
+settlement amount
+financial dashboard
+business dashboard
+executive dashboard
+operations dashboard
+marketing dashboard
+customer dashboard
+seller dashboard
+inventory dashboard
+order dashboard
+payment dashboard
+support dashboard
+analytics dashboard
