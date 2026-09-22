@@ -53,6 +53,17 @@ OWNER_ID = 7899583720
 BASE_DIR=os.path.dirname(os.path.abspath(__file__))
 def P(n): return os.path.join(BASE_DIR,n)
 
+# 🔥 AUTO WEBHOOK DELETE (409 conflict fix)
+def _kill_webhook():
+    try:
+        _r = requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook?drop_pending_updates=true", timeout=15)
+        _j = _r.json()
+        print(f"✅ Webhook deleted: {_j}")
+        return True
+    except Exception as _e:
+        print(f"⚠️ Webhook delete failed: {_e}")
+        return False
+        
 USERS_DB=P("users.json"); KEYS_DB=P("keys.json"); ADMINS_DB=P("admins.json"); UPROX_DB=P("user_proxies.json")
 STATS_DB=P("stats.json"); SET_FILE=P("settings.json"); VULN_CACHE=P("vuln_cache.json")
 FILES_DIR=P("user_files"); DOOM_IMG=P("doom.jpg"); KW_W=P("kw_weights.json"); EW_FILE=P("eng_weights.json")
@@ -383,14 +394,16 @@ def license_until(uid):
     try:
         u=U(uid); now=time.time(); rev=u.get("revoked_at",0); best=0
         al=u.get("admin_lic",0) or 0
-        if al>now and al>best and al<4102444800 and al-now > 3600: best=al
+        if al>now and al<4102444800: best=max(best,al)
         bu=u.get("bonus_until",0) or 0
-        if bu>now and bu>best and bu<4102444800 and bu-now > 60: best=bu
+        if bu>now and bu<4102444800: best=max(best,bu)
         for v in load_json(KEYS_DB,{}).values():
             if v.get("activated_by")==uid and v.get("activated_at"):
                 if v["activated_at"]<rev: continue
-                exp=v["activated_at"]+v["hours"]*3600
-                if exp>now and exp>best and exp<4102444800 and exp-now > 60: best=exp
+                hours = v.get("hours",0) or 0
+                if hours <= 0: hours = 24  # default 24 hours if missing
+                exp=v["activated_at"]+hours*3600
+                if exp>now and exp<4102444800: best=max(best,exp)
         return best if best>now else None
     except Exception:
         return None
@@ -2896,6 +2909,13 @@ def _resume_auto():
 if __name__=="__main__":
     print("💀 ALONEX — VIP PREMIUM EDITION STARTING...")
     
+    # 🔥 Webhook delete (409 fix)
+    try:
+        _r = requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook?drop_pending_updates=true", timeout=15)
+        print(f"✅ Webhook check: {_r.json()}")
+    except Exception as _e:
+        print(f"⚠️ Webhook delete: {_e}")
+    
     if "check_resources" in globals():
         try: check_resources()
         except: pass
@@ -2948,7 +2968,7 @@ if __name__=="__main__":
         try: 
             bot.infinity_polling(timeout=30)
         except KeyboardInterrupt: 
-            print("🛑 ALONESTOPPED.")
+            print("🛑 ALONEX STOPPED.")
             break
         except Exception as e: 
             print("⚠️ RESTARTING DUE TO ERROR:", e)
