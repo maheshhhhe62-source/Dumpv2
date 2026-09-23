@@ -48,7 +48,7 @@ E = {
 }
 
 
-BOT_TOKEN = "8907417771:AAEVcZtypGw930p15jzV8f8zV4Sgg2FYuK4"
+BOT_TOKEN = "8877478725:AAHmTjLkFMjnEiIugvOBYXVl9mLnCQ65Vec"
 OWNER_ID = 7899583720
 BASE_DIR=os.path.dirname(os.path.abspath(__file__))
 def P(n): return os.path.join(BASE_DIR,n)
@@ -1314,7 +1314,8 @@ def rate_limit_middleware(bot_instance, update):
             else:
                 try: bot_instance.reply_to(update, f"<blockquote><b>{E['warn']} TOO FAST! PLEASE WAIT {wait_s} SECONDS.</b></blockquote>", parse_mode="HTML")
                 except: pass
-            return False
+            # return False  <-- 🔥 YEH LINE DELETE KARO
+            return   # <-- Sirf warning do, block mat karo
         RATE_LIMITS[uid]=now
 
 # ============ CB WRAPPER (INSTANT) ============
